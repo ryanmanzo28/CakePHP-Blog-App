@@ -21,7 +21,7 @@
         </td>
         <td>
             <?= $this->Html->link('Edit', ['action' => 'edit', $article->slug]) ?>
-            <?= $this->Form->deleteLink(
+            <?= $this->Form->postLink(
                 'Delete',
                 ['action' => 'delete', $article->slug],
                 ['confirm' => 'Are you sure?'])
