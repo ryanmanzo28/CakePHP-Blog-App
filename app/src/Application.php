@@ -34,6 +34,11 @@ use Authentication\AuthenticationServiceProviderInterface;
 use Authentication\Identifier\PasswordIdentifier;
 use Authentication\Middleware\AuthenticationMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
+use Authorization\AuthorizationService;
+use Authorization\AuthorizationServiceInterface;
+use Authorization\AuthorizationServiceProviderInterface;
+use Authorization\Policy\OrmResolver;
+use Authorization\Middleware\AuthorizationMiddleware;
 
 /**
  * Application setup class.
@@ -41,7 +46,9 @@ use Psr\Http\Message\ServerRequestInterface;
  * This defines the bootstrapping logic and middleware layers you
  * want to use in your application.
  */
-class Application extends BaseApplication implements AuthenticationServiceProviderInterface
+class Application extends BaseApplication implements
+    AuthenticationServiceProviderInterface,
+    AuthorizationServiceProviderInterface
 {
     /**
      * Load all the application configuration and bootstrap logic.
@@ -70,6 +77,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             $this->addPlugin('DebugKit');
         }
         $this->addPlugin('Authentication');
+        $this->addPlugin('Authorization');
         // I18n loaded by CakePHP core
         // Load more plugins here
     }
@@ -105,7 +113,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             // https://book.cakephp.org/4/en/controllers/middleware.html#body-parser-middleware
             ->add(new BodyParserMiddleware())
 
-            ->add(new AuthenticationMiddleware($this)) 
+            ->add(new AuthenticationMiddleware($this))
+            ->add(new AuthorizationMiddleware($this, [
+                'requireAuthorizationCheck' => false,
+            ]))
 
             // Cross Site Request Forgery (CSRF) Protection Middleware
             // https://book.cakephp.org/4/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
@@ -170,22 +181,26 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             PasswordIdentifier::CREDENTIAL_PASSWORD => 'password',
         ];
 
+        // Load the identifier used to validate credentials.
+        $service->loadIdentifier('Authentication.Password', [
+            'fields' => $fields,
+        ]);
+
         // Load the authenticators. Session should be first.
         $service->loadAuthenticator('Authentication.Session');
         $service->loadAuthenticator('Authentication.Form', [
             'fields' => $fields,
-            'loginUrl' => Router::url([
-                'prefix' => false,
-                'plugin' => null,
-                'controller' => 'Users',
-                'action' => 'login',
-            ]),
-            'identifier' => [
-                'className' => 'Authentication.Password',
-                'fields' => $fields,
-            ],
+            'loginUrl' => '/users/login',
         ]);
 
         return $service;
     }
+    public function getAuthorizationService(ServerRequestInterface $request): AuthorizationServiceInterface
+{
+    $resolver = new OrmResolver();
+
+    return new AuthorizationService($resolver);
 }
+
+}
+
