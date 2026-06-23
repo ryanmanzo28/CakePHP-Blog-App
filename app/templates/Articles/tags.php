@@ -1,3 +1,6 @@
+<?php
+use function Cake\I18n\__;
+?>
 <!-- In templates/Articles/tags.php -->
 <h1>
     Articles tagged with

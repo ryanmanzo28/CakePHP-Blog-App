@@ -7,6 +7,7 @@
  */
 use Cake\Core\Configure;
 use Cake\Error\Debugger;
+use function Cake\Core\h;
 
 $this->layout = 'error';
 
@@ -38,8 +39,8 @@ if (Configure::read('debug')) :
     $this->end();
 endif;
 ?>
-<h2><?= 'An Internal Error Has Occurred.' ?></h2>
+<h2><?= h('An Internal Error Has Occurred.') ?></h2>
 <p class="error">
-    <strong><?= 'Error' ?>: </strong>
+    <strong><?= h('Error') ?>: </strong>
     <?= h($message) ?>
 </p>

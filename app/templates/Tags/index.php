@@ -1,4 +1,5 @@
 <?php
+use function Cake\I18n\__;
 /**
  * @var \App\View\AppView $this
  * @var iterable<\App\Model\Entity\Tag> $tags

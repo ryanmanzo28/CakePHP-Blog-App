@@ -1,3 +1,6 @@
+<?php
+use function Cake\I18n\__;
+?>
 <!-- File: templates/Articles/edit.php -->
 
 <h1>Edit Article</h1>

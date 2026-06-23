@@ -1,3 +1,6 @@
+<?php
+use function Cake\I18n\__;
+?>
 <!-- File: templates/Articles/index.php  (delete links added) -->
 
 <h1>Articles</h1>

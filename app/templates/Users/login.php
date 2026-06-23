@@ -1,3 +1,6 @@
+<?php
+use function Cake\I18n\__;
+?>
 <!-- templates/Users/login.php -->
 <div class="users form content">
     <?= $this->Flash->render() ?>
