@@ -41,13 +41,24 @@ class AppController extends Controller
     {
         parent::initialize();
 
+        $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
-        $this->loadComponent('Authentication.Authentication');
 
         /*
          * Enable the following component for recommended CakePHP form protection settings.
          * see https://book.cakephp.org/4/en/controllers/components/form-protection.html
          */
         //$this->loadComponent('FormProtection');
+        $this->loadComponent('Authentication.Authentication');
+
     }
+
+    // in src/Controller/AppController.php
+public function beforeFilter(\Cake\Event\EventInterface $event): void
+{
+    parent::beforeFilter($event);
+    // for all controllers in our application, make index and view
+    // actions public, skipping the authentication check
+    $this->Authentication->allowUnauthenticated(['index', 'view']);
+}
 }

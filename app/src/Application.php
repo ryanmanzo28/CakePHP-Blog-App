@@ -27,6 +27,7 @@ use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
+use Cake\Routing\Router;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
@@ -155,12 +156,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // Define where users should be redirected to when they are not authenticated
         $service->setConfig([
-            'unauthenticatedRedirect' => [
+            'unauthenticatedRedirect' => Router::url([
                 'prefix' => false,
                 'plugin' => null,
                 'controller' => 'Users',
                 'action' => 'login',
-            ],
+            ]),
             'queryParam' => 'redirect',
         ]);
 
@@ -173,12 +174,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $service->loadAuthenticator('Authentication.Session');
         $service->loadAuthenticator('Authentication.Form', [
             'fields' => $fields,
-            'loginUrl' => [
+            'loginUrl' => Router::url([
                 'prefix' => false,
                 'plugin' => null,
                 'controller' => 'Users',
                 'action' => 'login',
-            ],
+            ]),
             'identifier' => [
                 'className' => 'Authentication.Password',
                 'fields' => $fields,
