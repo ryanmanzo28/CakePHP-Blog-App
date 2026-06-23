@@ -1,4 +1,3 @@
-version: '3'
 services:
   app:
     image: shinsenter/cakephp4:latest
@@ -22,8 +21,12 @@ services:
       - .env
     environment:
       TZ: UTC
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MYSQL_DATABASE}
+      MARIADB_SKIP_TEST_DB: "yes"
     volumes:
       - "data:/var/lib/mysql"
+      - "./init.sql:/docker-entrypoint-initdb.d/01-init.sql"
     ports:
       - "${DATABASE_EXTERNAL_PORT}:3306"
 
