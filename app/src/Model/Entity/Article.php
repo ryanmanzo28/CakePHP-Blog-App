@@ -9,7 +9,7 @@ use Cake\ORM\Entity;
 
 class Article extends Entity
 {
-    protected array $_accessible = [
+    protected $_accessible = [
         'user_id' => true,
         'title' => true,
         'slug' => true,
