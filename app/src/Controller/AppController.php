@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\Controller\Controller;
+use App\Model\Entity\User;
 
 /**
  * Application Controller
@@ -58,6 +59,18 @@ class AppController extends Controller
 public function beforeFilter(\Cake\Event\EventInterface $event): void
 {
     parent::beforeFilter($event);
+
+    $identity = $this->request->getAttribute('identity');
+    $identityEntity = $identity ? $identity->getOriginalData() : null;
+    if ($identityEntity instanceof User && $identityEntity->isBanned()) {
+        $this->Authentication->logout();
+        $this->Flash->error(__('Your account has been banned. Contact an administrator.'));
+        $event->stopPropagation();
+        $this->setResponse($this->redirect(['controller' => 'Users', 'action' => 'login']));
+
+        return;
+    }
+
     // for all controllers in our application, make index and view
     // actions public, skipping the authentication check
     $this->Authentication->allowUnauthenticated(['index', 'view']);

@@ -15,6 +15,7 @@ class Article extends Entity
         'slug' => true,
         'body' => true,
         'published' => true,
+        'silenced' => true,
         'created' => true,
         'modified' => true,
         'user' => true,

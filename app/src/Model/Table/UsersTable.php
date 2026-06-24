@@ -70,7 +70,7 @@ class UsersTable extends Table
 
         $validator
             ->scalar('role')
-            ->inList('role', ['admin', 'user'], __('Role must be either admin or user.'))
+            ->inList('role', ['admin', 'user', 'banned'], __('Role must be admin, user, or banned.'))
             ->notEmptyString('role');
 
         return $validator;

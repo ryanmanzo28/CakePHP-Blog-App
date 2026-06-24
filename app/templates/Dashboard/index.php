@@ -3,114 +3,110 @@
  * Dashboard view.
  *
  * Variables available:
- *   $articleCount   (int)
- *   $userCount      (int)
- *   $publishedCount (int)
- *   $recentArticles (iterable)
- *   $recentUsers    (iterable)
- *   $identity       (\Authorization\IdentityInterface|null)
+ *   $identity         (\Authorization\IdentityInterface|null)
+ *   $currentUserId    (int|null)
+ *   $feedArticles     (iterable)
+ *   $myRecentArticles (iterable)
  *
  * @var \App\View\AppView $this
- * @var int $articleCount
- * @var int $userCount
- * @var int $publishedCount
- * @var iterable $recentArticles
- * @var iterable $recentUsers
  */
 $this->assign('title', __('Dashboard'));
+$identity = $identity ?? null;
+$currentUserId = $currentUserId ?? null;
+$feedArticles = $feedArticles ?? [];
+$myRecentArticles = $myRecentArticles ?? [];
 ?>
 <div class="dashboard-shell">
 <div class="dashboard">
 
-    <header class="dashboard__hero">
+    <header class="dashboard__hero dashboard__hero--feed">
         <div class="dashboard__hero-copy">
-            <h2><?= __('Dashboard') ?></h2>
-            <p><?= __('Everything important at a glance.') ?></p>
+            <h2><?= __('Your Feed') ?></h2>
+            <p><?= __('Discover recent posts and publish your own updates.') ?></p>
         </div>
         <?php if ($identity) : ?>
             <span class="dashboard__badge"><?= __('Signed in as {0}', h($identity->get('email'))) ?></span>
         <?php endif; ?>
     </header>
 
-    <section class="dashboard__stats" aria-label="<?= __('Overview metrics') ?>">
-        <article class="dashboard__card">
-            <span class="dashboard__card-icon" aria-hidden="true">📰</span>
-            <span class="dashboard__card-value"><?= $articleCount ?></span>
-            <span class="dashboard__card-label"><?= __('Total Articles') ?></span>
-            <?= $this->Html->link(__('View all'), ['controller' => 'Articles', 'action' => 'index'], ['class' => 'dashboard__card-link']) ?>
-        </article>
-
-        <article class="dashboard__card">
-            <span class="dashboard__card-icon" aria-hidden="true">👥</span>
-            <span class="dashboard__card-value"><?= $userCount ?></span>
-            <span class="dashboard__card-label"><?= __('Total Users') ?></span>
-            <?= $this->Html->link(__('Manage users'), ['controller' => 'Users', 'action' => 'index'], ['class' => 'dashboard__card-link']) ?>
-        </article>
-
-        <article class="dashboard__card">
-            <span class="dashboard__card-icon" aria-hidden="true">✅</span>
-            <span class="dashboard__card-value"><?= $publishedCount ?></span>
-            <span class="dashboard__card-label"><?= __('Published Posts') ?></span>
-            <?= $this->Html->link(__('Write new'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'dashboard__card-link']) ?>
-        </article>
+    <section class="dashboard__actions" aria-label="<?= __('Create and manage') ?>">
+        <?= $this->Html->link(__('Create Blog Post'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'dashboard__action-btn']) ?>
+        <?= $this->Html->link(__('Browse All Articles'), ['controller' => 'Articles', 'action' => 'index'], ['class' => 'dashboard__action-btn']) ?>
+        <?= $this->Html->link(__('Settings'), ['controller' => 'Settings', 'action' => 'index'], ['class' => 'dashboard__action-btn']) ?>
     </section>
 
-    <section class="dashboard__actions" aria-label="<?= __('Quick actions') ?>">
-        <?= $this->Html->link(__('New Article'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'dashboard__action-btn']) ?>
-        <?= $this->Html->link(__('Manage Users'), ['controller' => 'Users', 'action' => 'index'], ['class' => 'dashboard__action-btn']) ?>
-        <?= $this->Html->link(__('Open Settings'), ['controller' => 'Settings', 'action' => 'index'], ['class' => 'dashboard__action-btn']) ?>
-    </section>
-
-    <div class="dashboard__grid">
-        <section class="dashboard__panel">
-            <div class="dashboard__panel-head">
-                <h3><?= __('Recent Articles') ?></h3>
-                <?= $this->Html->link(__('See all'), ['controller' => 'Articles', 'action' => 'index']) ?>
-            </div>
-
-            <?php if (count($recentArticles) === 0) : ?>
-                <p class="dashboard__empty"><?= __('No articles yet.') ?></p>
+    <div class="dashboard-feed">
+        <section class="dashboard-feed__main" aria-label="<?= __('Article feed') ?>">
+            <?php if (empty($feedArticles) || count($feedArticles) === 0) : ?>
+                <article class="dashboard-feed__card">
+                    <p class="dashboard__empty"><?= __('No published articles yet.') ?></p>
+                </article>
             <?php else : ?>
-                <ul class="dashboard__list">
-                    <?php foreach ($recentArticles as $article) : ?>
-                        <li class="dashboard__list-item">
-                            <div class="dashboard__list-main">
-                                <?= $this->Html->link(
-                                    h($article->title),
-                                    ['controller' => 'Articles', 'action' => 'view', $article->slug],
-                                    ['class' => 'dashboard__list-title']
-                                ) ?>
-                                <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
-                            </div>
-                            <span class="dashboard__pill"><?= $article->published ? __('Published') : __('Draft') ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+                <?php foreach ($feedArticles as $article) : ?>
+                    <?php
+                    $body = trim((string)$article->body);
+                    $sentences = preg_split('/(?<=[.!?])\s+/', $body) ?: [];
+                    $excerpt = implode(' ', array_slice($sentences, 0, 4));
+                    if ($excerpt === '') {
+                        $excerpt = mb_substr($body, 0, 260);
+                    }
+                    ?>
+                    <article class="dashboard-feed__card">
+                        <header class="dashboard-feed__card-head">
+                            <?= $this->Html->link(
+                                h($article->title),
+                                ['controller' => 'Articles', 'action' => 'view', $article->slug],
+                                ['class' => 'dashboard-feed__title']
+                            ) ?>
+                            <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
+                        </header>
+
+                        <p class="dashboard-feed__excerpt">
+                            <?= h($excerpt) ?>
+                            <?php if (mb_strlen($body) > mb_strlen($excerpt)) : ?>
+                                ...
+                            <?php endif; ?>
+                        </p>
+
+                        <div class="dashboard-feed__actions">
+                            <?= $this->Html->link(__('Read more'), ['controller' => 'Articles', 'action' => 'view', $article->slug], ['class' => 'dashboard__card-link']) ?>
+                            <?php if (!empty($currentUserId) && (int)$article->user_id === (int)$currentUserId) : ?>
+                                <?= $this->Html->link(__('Edit my post'), ['controller' => 'Articles', 'action' => 'edit', $article->slug], ['class' => 'dashboard__card-link']) ?>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
             <?php endif; ?>
         </section>
 
-        <section class="dashboard__panel">
-            <div class="dashboard__panel-head">
-                <h3><?= __('Newest Users') ?></h3>
-                <?= $this->Html->link(__('User list'), ['controller' => 'Users', 'action' => 'index']) ?>
-            </div>
+        <aside class="dashboard-feed__side" aria-label="<?= __('Your recent posts') ?>">
+            <section class="dashboard__panel">
+                <div class="dashboard__panel-head">
+                    <h3><?= __('Your Recent Posts') ?></h3>
+                    <?= $this->Html->link(__('New'), ['controller' => 'Articles', 'action' => 'add']) ?>
+                </div>
 
-            <?php if (count($recentUsers) === 0) : ?>
-                <p class="dashboard__empty"><?= __('No users found.') ?></p>
-            <?php else : ?>
-                <ul class="dashboard__list">
-                    <?php foreach ($recentUsers as $user) : ?>
-                        <li class="dashboard__list-item">
-                            <div class="dashboard__list-main">
-                                <span class="dashboard__list-title"><?= h($user->email) ?></span>
-                                <span class="dashboard__list-meta"><?= h($user->created->i18nFormat('MMM d, yyyy')) ?></span>
-                            </div>
-                            <span class="dashboard__pill dashboard__pill--role"><?= h($user->role) ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-        </section>
+                <?php if (empty($myRecentArticles) || count($myRecentArticles) === 0) : ?>
+                    <p class="dashboard__empty"><?= __('You have not posted yet.') ?></p>
+                <?php else : ?>
+                    <ul class="dashboard__list">
+                        <?php foreach ($myRecentArticles as $article) : ?>
+                            <li class="dashboard__list-item">
+                                <div class="dashboard__list-main">
+                                    <?= $this->Html->link(
+                                        h($article->title),
+                                        ['controller' => 'Articles', 'action' => 'view', $article->slug],
+                                        ['class' => 'dashboard__list-title']
+                                    ) ?>
+                                    <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
+                                </div>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'Articles', 'action' => 'edit', $article->slug], ['class' => 'dashboard__card-link']) ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </section>
+        </aside>
     </div>
 
 </div>

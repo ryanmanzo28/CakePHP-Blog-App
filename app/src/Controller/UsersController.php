@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Entity\User;
+
 /**
  * Users Controller
  *
@@ -132,10 +134,23 @@ class UsersController extends AppController
         $result = $this->Authentication->getResult();
         // If the user is logged in send them away.
         if ($result && $result->isValid()) {
-            $target = $this->Authentication->getLoginRedirect() ?? [
-                'controller' => 'Dashboard',
-                'action' => 'index',
-            ];
+            $identity = $this->request->getAttribute('identity');
+            $identityEntity = $identity ? $identity->getOriginalData() : null;
+            if ($identityEntity instanceof User && $identityEntity->isBanned()) {
+                $this->Authentication->logout();
+                $this->Flash->error(__('Your account has been banned. Contact an administrator.'));
+
+                return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+            }
+
+            $target = $this->Authentication->getLoginRedirect();
+            if (!$target) {
+                $target = [
+                    'controller' => 'Dashboard',
+                    'action' => 'index',
+                ];
+            }
+
             return $this->redirect($target);
         }
         if ($this->request->is('post')) {

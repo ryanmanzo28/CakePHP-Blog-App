@@ -8,16 +8,27 @@
  * @var \App\View\AppView $this
  */
 
+$identity = $this->getRequest()->getAttribute('identity');
+$identityEntity = $identity ? $identity->getOriginalData() : null;
+$isAdmin = $identityEntity && method_exists($identityEntity, 'isAdmin') && $identityEntity->isAdmin();
+
 // Edit this list to add / rename menu items.
 // 'url' accepts any value you'd pass to $this->Url->build() (string or array).
-$menuItems = [
-    ['label' => __('Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'index'], 'icon' => '🏠'],
-    ['label' => __('Articles'), 'url' => ['controller' => 'Articles', 'action' => 'index'], 'icon' => '📄'],
-    ['label' => __('Profile'), 'url' => '#', 'icon' => '👤'],
-    ['label' => __('Settings'), 'url' => ['controller' => 'Settings', 'action' => 'index'], 'icon' => '⚙️'],
-];
-
-$identity = $this->getRequest()->getAttribute('identity');
+if ($isAdmin) {
+    $menuItems = [
+        ['label' => __('Feed Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'index'], 'icon' => '🏠'],
+        ['label' => __('Admin Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'admin'], 'icon' => '🛡️'],
+        ['label' => __('Articles'), 'url' => ['controller' => 'Articles', 'action' => 'index'], 'icon' => '📄'],
+        ['label' => __('User Management'), 'url' => ['controller' => 'Users', 'action' => 'index'], 'icon' => '👥'],
+        ['label' => __('Settings'), 'url' => ['controller' => 'Settings', 'action' => 'index'], 'icon' => '⚙️'],
+    ];
+} else {
+    $menuItems = [
+        ['label' => __('Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'index'], 'icon' => '🏠'],
+        ['label' => __('Articles'), 'url' => ['controller' => 'Articles', 'action' => 'index'], 'icon' => '📄'],
+        ['label' => __('Settings'), 'url' => ['controller' => 'Settings', 'action' => 'index'], 'icon' => '⚙️'],
+    ];
+}
 ?>
 <div class="popout-menu" data-popout-menu>
     <button

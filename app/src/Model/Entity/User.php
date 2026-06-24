@@ -22,6 +22,7 @@ class User extends Entity
      */
     public const ROLE_ADMIN = 'admin';
     public const ROLE_USER = 'user';
+    public const ROLE_BANNED = 'banned';
 
     /**
      * Fields that can be mass assigned using newEntity() or patchEntity().
@@ -66,5 +67,15 @@ class User extends Entity
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Returns true when the user has been banned.
+     *
+     * @return bool
+     */
+    public function isBanned(): bool
+    {
+        return $this->role === self::ROLE_BANNED;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\ContentModerationService;
 use Cake\Http\Response;
 
 /**
@@ -11,6 +12,14 @@ use Cake\Http\Response;
  */
 class ArticlesController extends AppController
 {
+    private ContentModerationService $moderationService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->moderationService = new ContentModerationService();
+    }
+
     public function index(): void
     {
         // View, index and tags actions are public methods
@@ -45,7 +54,22 @@ class ArticlesController extends AppController
         $article->user_id = $this->request->getAttribute('identity')->getIdentifier();
 
         if ($this->Articles->save($article)) {
+                $result = $this->moderationService->moderateArticle($article);
+
+                if (!empty($result['deleted'])) {
+                    $this->Flash->warning(__('Your article matched moderation filters and was removed.'));
+
+                    return $this->redirect(['action' => 'index']);
+                }
+
             $this->Flash->success(__('Your article has been saved.'));
+
+                if (!empty($result['silenced'])) {
+                    $this->Flash->warning(__('Your article is hidden from the main feed due to moderation filters.'));
+                }
+                if (!empty($result['bannedUser'])) {
+                    $this->Flash->error(__('Your account has been restricted by moderation policy.'));
+                }
 
             return $this->redirect(['action' => 'index']);
         }
@@ -71,7 +95,22 @@ public function edit($slug)
             'accessibleFields' => ['user_id' => false],
         ]);
         if ($this->Articles->save($article)) {
+                $result = $this->moderationService->moderateArticle($article);
+
+                if (!empty($result['deleted'])) {
+                    $this->Flash->warning(__('The article matched moderation filters and was removed.'));
+
+                    return $this->redirect(['action' => 'index']);
+                }
+
             $this->Flash->success(__('Your article has been updated.'));
+
+                if (!empty($result['silenced'])) {
+                    $this->Flash->warning(__('This article is hidden from the main feed due to moderation filters.'));
+                }
+                if (!empty($result['bannedUser'])) {
+                    $this->Flash->error(__('Your account has been restricted by moderation policy.'));
+                }
 
             return $this->redirect(['action' => 'index']);
         }
