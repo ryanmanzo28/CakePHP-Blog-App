@@ -124,7 +124,82 @@ class UsersController extends AppController
         // Configure the login action to not require authentication, preventing
         // the infinite redirect loop issue
        // In UsersController::beforeFilter()
-        $this->Authentication->allowUnauthenticated(['login', 'add']);
+        $this->Authentication->allowUnauthenticated(['login', 'add', 'publicProfile']);
+    }
+
+    /**
+     * Public profile page for any user.
+     *
+     * @param string|null $id Target user id.
+     * @return void
+     */
+    public function publicProfile($id = null): void
+    {
+        $this->Authorization->skipAuthorization();
+
+        $targetUserId = (int)$id;
+        $identity = $this->request->getAttribute('identity');
+        $currentUserId = $identity ? (int)$identity->getIdentifier() : null;
+
+        $user = $this->Users->get($targetUserId, [
+            'contain' => [],
+        ]);
+
+        $Articles = $this->fetchTable('Articles');
+        $articleConditions = [
+            'Articles.user_id' => $targetUserId,
+            'Articles.published' => true,
+        ];
+        if ($Articles->getSchema()->hasColumn('silenced')) {
+            $articleConditions['Articles.silenced'] = false;
+        }
+
+        $myArticles = $Articles->find()
+            ->where($articleConditions)
+            ->orderDesc('Articles.created')
+            ->all()
+            ->toArray();
+
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
+
+        $followers = $Follows->find()
+            ->where(['Follows.following_id' => $targetUserId])
+            ->contain(['FollowerUsers'])
+            ->orderDesc('Follows.created')
+            ->all()
+            ->toArray();
+
+        $following = $Follows->find()
+            ->where(['Follows.follower_id' => $targetUserId])
+            ->contain(['FollowingUsers'])
+            ->orderDesc('Follows.created')
+            ->all()
+            ->toArray();
+
+        $isOwnProfile = $currentUserId !== null && $currentUserId === $targetUserId;
+        $isFollowing = false;
+        if ($currentUserId !== null && !$isOwnProfile) {
+            $isFollowing = $Follows->find()
+                ->where([
+                    'Follows.follower_id' => $currentUserId,
+                    'Follows.following_id' => $targetUserId,
+                ])
+                ->count() > 0;
+        }
+
+        $isPublicProfile = true;
+        $this->set(compact(
+            'user',
+            'myArticles',
+            'followers',
+            'following',
+            'currentUserId',
+            'isOwnProfile',
+            'isFollowing',
+            'isPublicProfile'
+        ));
+        $this->render('profile');
     }
 
     /**
@@ -232,7 +307,20 @@ class UsersController extends AppController
             ->all()
             ->toArray();
 
-        $this->set(compact('user', 'myArticles', 'followers', 'following'));
+        $isOwnProfile = true;
+        $isFollowing = false;
+        $isPublicProfile = false;
+
+        $this->set(compact(
+            'user',
+            'myArticles',
+            'followers',
+            'following',
+            'currentUserId',
+            'isOwnProfile',
+            'isFollowing',
+            'isPublicProfile'
+        ));
     }
 
     /**

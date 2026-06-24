@@ -38,7 +38,7 @@ class ArticlesController extends AppController
         // Update retrieving tags with contain()
         $article = $this->Articles
             ->findBySlug($slug)
-            ->contain('Tags')
+            ->contain(['Tags', 'Users'])
             ->firstOrFail();
 
         $identity = $this->Authentication->getIdentity();

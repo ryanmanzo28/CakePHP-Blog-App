@@ -77,7 +77,13 @@ $followedUserIds = $followedUserIds ?? [];
                         $isFollowingAuthor = in_array($authorId, $followedUserIds, true);
                         ?>
                         <div class="dashboard-feed__meta-row">
-                            <span class="dashboard-feed__author"><?= __('by {0}', h($authorEmail)) ?></span>
+                            <span class="dashboard-feed__author\"><?= __('by') ?>
+                                <?= $this->Html->link(
+                                    h($authorEmail),
+                                    ['controller' => 'Users', 'action' => 'publicProfile', $authorId],
+                                    ['class' => 'dashboard-feed__author-link']
+                                ) ?>
+                            </span>
                             <?php if (!empty($currentUserId) && $authorId !== (int)$currentUserId) : ?>
                                 <?php if ($isFollowingAuthor) : ?>
                                     <?= $this->Form->postLink(

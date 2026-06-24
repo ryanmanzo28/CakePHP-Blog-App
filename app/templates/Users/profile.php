@@ -7,16 +7,45 @@ use function Cake\I18n\__;
  * @var array<\App\Model\Entity\Article> $myArticles
  * @var array<\App\Model\Entity\Follow> $followers
  * @var array<\App\Model\Entity\Follow> $following
+ * @var int|null $currentUserId
+ * @var bool $isOwnProfile
+ * @var bool $isFollowing
+ * @var bool $isPublicProfile
  */
-$this->assign('title', __('My Profile'));
+$isOwnProfile = $isOwnProfile ?? true;
+$isFollowing = $isFollowing ?? false;
+$isPublicProfile = $isPublicProfile ?? false;
+$currentUserId = $currentUserId ?? null;
+
+$this->assign('title', $isOwnProfile ? __('My Profile') : __('Profile'));
 $initial = strtoupper(substr((string)$user->email, 0, 1));
 $followers = $followers ?? [];
 $following = $following ?? [];
 ?>
 <section class="profile-page content">
     <header class="profile-page__header">
-        <h2><?= __('My Profile') ?></h2>
-        <p><?= __('Manage your profile picture and review your posts.') ?></p>
+        <h2><?= $isOwnProfile ? __('My Profile') : __('{0}\'s Profile', h($user->email)) ?></h2>
+        <p><?= $isOwnProfile ? __('Manage your profile picture and review your posts.') : __('Browse this user\'s public activity and connections.') ?></p>
+
+        <?php if (!$isOwnProfile) : ?>
+            <div class="profile-page__header-actions">
+                <?php if ($currentUserId === null) : ?>
+                    <?= $this->Html->link(__('Sign in to follow'), ['controller' => 'Users', 'action' => 'login'], ['class' => 'button button-outline']) ?>
+                <?php elseif ($isFollowing) : ?>
+                    <?= $this->Form->postLink(
+                        __('Following'),
+                        ['controller' => 'Users', 'action' => 'unfollow', $user->id],
+                        ['class' => 'button button-outline']
+                    ) ?>
+                <?php else : ?>
+                    <?= $this->Form->postLink(
+                        __('Follow'),
+                        ['controller' => 'Users', 'action' => 'follow', $user->id],
+                        ['class' => 'button']
+                    ) ?>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </header>
 
     <div class="profile-page__grid">
@@ -30,18 +59,20 @@ $following = $following ?? [];
                 <?php endif; ?>
             </div>
 
-            <?= $this->Form->create($user, ['type' => 'file', 'id' => 'profile-form']) ?>
-                <?= $this->Form->control('profile_upload', [
-                    'type' => 'file',
-                    'label' => __('Upload new picture'),
-                    'id' => 'profile-upload-input',
-                    'accept' => 'image/png,image/jpeg,image/gif,image/webp',
-                    'required' => false,
-                ]) ?>
-                <p class="profile-page__hint"><?= __('Max file size: 2 MB. Large images are automatically optimized before upload.') ?></p>
-                <p class="profile-page__upload-error" id="profile-upload-error" aria-live="polite"></p>
-                <?= $this->Form->button(__('Save Profile'), ['class' => 'button']) ?>
-            <?= $this->Form->end() ?>
+            <?php if ($isOwnProfile) : ?>
+                <?= $this->Form->create($user, ['type' => 'file', 'id' => 'profile-form']) ?>
+                    <?= $this->Form->control('profile_upload', [
+                        'type' => 'file',
+                        'label' => __('Upload new picture'),
+                        'id' => 'profile-upload-input',
+                        'accept' => 'image/png,image/jpeg,image/gif,image/webp',
+                        'required' => false,
+                    ]) ?>
+                    <p class="profile-page__hint"><?= __('Max file size: 2 MB. Large images are automatically optimized before upload.') ?></p>
+                    <p class="profile-page__upload-error" id="profile-upload-error" aria-live="polite"></p>
+                    <?= $this->Form->button(__('Save Profile'), ['class' => 'button']) ?>
+                <?= $this->Form->end() ?>
+            <?php endif; ?>
         </section>
 
         <section class="profile-page__card">
@@ -54,12 +85,14 @@ $following = $following ?? [];
 
     <section class="profile-page__posts profile-page__card">
         <div class="profile-page__posts-head">
-            <h3><?= __('My Blog Posts') ?></h3>
-            <?= $this->Html->link(__('Create New'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'button button-outline']) ?>
+            <h3><?= $isOwnProfile ? __('My Blog Posts') : __('Recent Blog Posts') ?></h3>
+            <?php if ($isOwnProfile) : ?>
+                <?= $this->Html->link(__('Create New'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'button button-outline']) ?>
+            <?php endif; ?>
         </div>
 
         <?php if (count($myArticles) === 0) : ?>
-            <p class="profile-page__empty"><?= __('You have not posted anything yet.') ?></p>
+            <p class="profile-page__empty"><?= $isOwnProfile ? __('You have not posted anything yet.') : __('This user has not posted anything yet.') ?></p>
         <?php else : ?>
             <ul class="profile-page__list">
                 <?php foreach ($myArticles as $article) : ?>
@@ -73,7 +106,9 @@ $following = $following ?? [];
                             <span class="profile-page__post-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
                         </div>
                         <div class="profile-page__post-actions">
-                            <?= $this->Html->link(__('Edit'), ['controller' => 'Articles', 'action' => 'edit', $article->slug], ['class' => 'dashboard__card-link']) ?>
+                            <?php if ($isOwnProfile) : ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'Articles', 'action' => 'edit', $article->slug], ['class' => 'dashboard__card-link']) ?>
+                            <?php endif; ?>
                             <span class="dashboard__pill"><?= $article->published ? __('Published') : __('Draft') ?></span>
                         </div>
                     </li>
@@ -98,7 +133,11 @@ $following = $following ?? [];
                             <?php if ($followerUser) : ?>
                                 <li class="profile-page__list-item">
                                     <div class="profile-page__post-main">
-                                        <span class="profile-page__post-title"><?= h($followerUser->email) ?></span>
+                                        <?= $this->Html->link(
+                                            h($followerUser->email),
+                                            ['controller' => 'Users', 'action' => 'publicProfile', $followerUser->id],
+                                            ['class' => 'profile-page__post-title']
+                                        ) ?>
                                         <span class="profile-page__post-meta"><?= __('Since {0}', h($follow->created?->i18nFormat('MMM d, yyyy'))) ?></span>
                                     </div>
                                 </li>
@@ -122,7 +161,11 @@ $following = $following ?? [];
                             <?php if ($followingUser) : ?>
                                 <li class="profile-page__list-item">
                                     <div class="profile-page__post-main">
-                                        <span class="profile-page__post-title"><?= h($followingUser->email) ?></span>
+                                        <?= $this->Html->link(
+                                            h($followingUser->email),
+                                            ['controller' => 'Users', 'action' => 'publicProfile', $followingUser->id],
+                                            ['class' => 'profile-page__post-title']
+                                        ) ?>
                                         <span class="profile-page__post-meta"><?= __('Following since {0}', h($follow->created?->i18nFormat('MMM d, yyyy'))) ?></span>
                                     </div>
                                 </li>
@@ -137,6 +180,7 @@ $following = $following ?? [];
 
 <script>
 (function () {
+    var isOwnProfile = <?= $isOwnProfile ? 'true' : 'false' ?>;
     var input = document.getElementById('profile-upload-input');
     var form = document.getElementById('profile-form');
     var previewWrap = document.getElementById('profile-avatar-preview');
@@ -146,7 +190,7 @@ $following = $following ?? [];
     var maxDimension = 1200;
     var isSubmitting = false;
 
-    if (!input || !form || !previewWrap || !errorEl) {
+    if (!isOwnProfile || !input || !form || !previewWrap || !errorEl) {
         return;
     }
 

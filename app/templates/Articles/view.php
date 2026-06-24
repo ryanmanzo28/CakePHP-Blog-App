@@ -27,6 +27,14 @@ $tagList = array_filter(array_map('trim', explode(',', (string)$article->tag_str
             <span class="article-view__date"><?= h($article->created->i18nFormat('MMMM d, yyyy')) ?></span>
             <span class="article-view__sep">·</span>
             <span class="article-view__read-time"><?= __n('{0} min read', '{0} min read', $readMinutes, $readMinutes) ?></span>
+            <?php if (!empty($article->user)) : ?>
+                <span class="article-view__sep">·</span>
+                <?= $this->Html->link(
+                    __('by {0}', h($article->user->email)),
+                    ['controller' => 'Users', 'action' => 'publicProfile', $article->user->id],
+                    ['class' => 'article-view__author-link']
+                ) ?>
+            <?php endif; ?>
             <?php if (!empty($tagList)) : ?>
                 <span class="article-view__sep">·</span>
                 <span class="article-view__tags">

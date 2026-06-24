@@ -8,6 +8,9 @@ $routes->setRouteClass(DashedRoute::class);
 $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/', ['controller' => 'Pages', 'action' => 'home']);
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+    $builder->connect('/u/:id', ['controller' => 'Users', 'action' => 'publicProfile'])
+        ->setPass(['id'])
+        ->setPatterns(['id' => '\\d+']);
 
     // Add this
     // New route we're adding for our tagged action.
