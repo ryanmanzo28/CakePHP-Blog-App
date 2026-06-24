@@ -18,6 +18,7 @@ if ($isAdmin) {
     $menuItems = [
         ['label' => __('Feed Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'index'], 'icon' => '🏠'],
         ['label' => __('Admin Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'admin'], 'icon' => '🛡️'],
+        ['label' => __('Profile'), 'url' => ['controller' => 'Users', 'action' => 'profile'], 'icon' => '🙍'],
         ['label' => __('Articles'), 'url' => ['controller' => 'Articles', 'action' => 'index'], 'icon' => '📄'],
         ['label' => __('User Management'), 'url' => ['controller' => 'Users', 'action' => 'index'], 'icon' => '👥'],
         ['label' => __('Settings'), 'url' => ['controller' => 'Settings', 'action' => 'index'], 'icon' => '⚙️'],
@@ -25,6 +26,7 @@ if ($isAdmin) {
 } else {
     $menuItems = [
         ['label' => __('Dashboard'), 'url' => ['controller' => 'Dashboard', 'action' => 'index'], 'icon' => '🏠'],
+        ['label' => __('Profile'), 'url' => ['controller' => 'Users', 'action' => 'profile'], 'icon' => '🙍'],
         ['label' => __('Articles'), 'url' => ['controller' => 'Articles', 'action' => 'index'], 'icon' => '📄'],
         ['label' => __('Settings'), 'url' => ['controller' => 'Settings', 'action' => 'index'], 'icon' => '⚙️'],
     ];

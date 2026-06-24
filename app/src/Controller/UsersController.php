@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Model\Entity\User;
+use Cake\Http\Response;
+use Psr\Http\Message\UploadedFileInterface;
 
 /**
  * Users Controller
@@ -166,5 +168,80 @@ class UsersController extends AppController
         $this->Authorization->skipAuthorization();
         $this->Authentication->logout();
         return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+    }
+
+    /**
+     * Profile page for the current user.
+     * Allows profile image upload and lists user's own posts.
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function profile()
+    {
+        $identity = $this->request->getAttribute('identity');
+        $currentUserId = (int)$identity->getIdentifier();
+
+        $user = $this->Users->get($currentUserId, [
+            'contain' => [],
+        ]);
+        $this->Authorization->authorize($user, 'edit');
+
+        if ($this->request->is(['patch', 'post', 'put'])) {
+            $upload = $this->request->getData('profile_upload');
+            if ($upload instanceof UploadedFileInterface && $upload->getError() === UPLOAD_ERR_OK) {
+                $savedPath = $this->saveProfileImage($upload, $user->id);
+                if ($savedPath === null) {
+                    $this->Flash->error(__('Invalid image file. Use jpg, png, gif, or webp.'));
+
+                    return;
+                }
+                $user->profile_image = $savedPath;
+            }
+
+            if ($this->Users->save($user)) {
+                $this->Flash->success(__('Your profile has been updated.'));
+
+                return $this->redirect(['action' => 'profile']);
+            }
+
+            $this->Flash->error(__('Unable to update your profile.'));
+        }
+
+        $Articles = $this->fetchTable('Articles');
+        $myArticles = $Articles->find()
+            ->where(['Articles.user_id' => $currentUserId])
+            ->orderDesc('Articles.created')
+            ->all()
+            ->toArray();
+
+        $this->set(compact('user', 'myArticles'));
+    }
+
+    /**
+     * Persist uploaded profile image under webroot/img/profiles.
+     *
+     * @param \Psr\Http\Message\UploadedFileInterface $upload Uploaded image.
+     * @param int $userId Current user id.
+     * @return string|null Relative web path or null on invalid file.
+     */
+    private function saveProfileImage(UploadedFileInterface $upload, int $userId): ?string
+    {
+        $clientName = (string)$upload->getClientFilename();
+        $ext = strtolower(pathinfo($clientName, PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($ext, $allowed, true)) {
+            return null;
+        }
+
+        $targetDir = WWW_ROOT . 'img' . DS . 'profiles' . DS;
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $filename = 'user_' . $userId . '_' . time() . '.' . $ext;
+        $fullPath = $targetDir . $filename;
+        $upload->moveTo($fullPath);
+
+        return 'profiles/' . $filename;
     }
 }

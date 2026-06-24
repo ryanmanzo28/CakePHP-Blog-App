@@ -73,6 +73,10 @@ class UsersTable extends Table
             ->inList('role', ['admin', 'user', 'banned'], __('Role must be admin, user, or banned.'))
             ->notEmptyString('role');
 
+        $validator
+            ->allowEmptyString('profile_image')
+            ->maxLength('profile_image', 255);
+
         return $validator;
     }
 

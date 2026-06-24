@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use Cake\I18n\FrozenTime;
 use Cake\ORM\Query;
 use Cake\ORM\Table;
 use Cake\Utility\Text;
@@ -23,6 +24,15 @@ class ArticlesTable extends Table
 
     public function beforeSave(EventInterface $event, $entity, $options): void
     {
+        // Defensive timestamp fallback in case behavior resolution is bypassed.
+        $now = FrozenTime::now();
+        if ($entity->isNew() && !$entity->get('created')) {
+            $entity->set('created', $now);
+        }
+        if (!$entity->get('modified')) {
+            $entity->set('modified', $now);
+        }
+
         if ($entity->isNew() && !$entity->slug) {
             $sluggedTitle = Text::slug($entity->title);
             // trim slug to maximum length defined in schema

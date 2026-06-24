@@ -15,6 +15,7 @@ use function Cake\I18n\__;
             <thead>
                 <tr>
                     <th><?= $this->Paginator->sort('id') ?></th>
+                    <th><?= __('Avatar') ?></th>
                     <th><?= $this->Paginator->sort('email') ?></th>
                     <th><?= $this->Paginator->sort('created') ?></th>
                     <th><?= $this->Paginator->sort('modified') ?></th>
@@ -25,6 +26,13 @@ use function Cake\I18n\__;
                 <?php foreach ($users as $user): ?>
                 <tr>
                     <td><?= $this->Number->format($user->id) ?></td>
+                    <td>
+                        <?php if (!empty($user->profile_image)) : ?>
+                            <?= $this->Html->image($user->profile_image, ['class' => 'user-avatar user-avatar--small', 'alt' => __('Avatar')]) ?>
+                        <?php else : ?>
+                            <span class="user-avatar user-avatar--small user-avatar--placeholder"><?= strtoupper(substr((string)$user->email, 0, 1)) ?></span>
+                        <?php endif; ?>
+                    </td>
                     <td><?= h($user->email) ?></td>
                     <td><?= h($user->created) ?></td>
                     <td><?= h($user->modified) ?></td>

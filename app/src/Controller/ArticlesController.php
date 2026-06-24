@@ -50,6 +50,10 @@ class ArticlesController extends AppController
     if ($this->request->is('post')) {
         $article = $this->Articles->patchEntity($article, $this->request->getData());
 
+        if ($article->published === null) {
+            $article->published = false;
+        }
+
         // Changed: Set the user_id from the current user.
         $article->user_id = $this->request->getAttribute('identity')->getIdentifier();
 
@@ -94,6 +98,11 @@ public function edit($slug)
             // Added: Disable modification of user_id.
             'accessibleFields' => ['user_id' => false],
         ]);
+
+        if ($article->published === null) {
+            $article->published = false;
+        }
+
         if ($this->Articles->save($article)) {
                 $result = $this->moderationService->moderateArticle($article);
 

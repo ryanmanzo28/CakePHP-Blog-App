@@ -12,6 +12,7 @@ use Cake\ORM\Entity;
  * @property string $email
  * @property string $password
  * @property string $role
+ * @property string|null $profile_image
  *
  * @property \App\Model\Entity\Article[] $articles
  */
@@ -39,6 +40,7 @@ class User extends Entity
     protected $_accessible = [
         'email' => true,
         'password' => true,
+        'profile_image' => true,
         'articles' => true,
     ];
 

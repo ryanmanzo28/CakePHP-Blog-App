@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use Cake\Event\EventInterface;
+use Cake\I18n\FrozenTime;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -67,5 +69,22 @@ class ModerationFiltersTable extends Table
         ]);
 
         return $rules;
+    }
+
+    /**
+     * @param \Cake\Event\EventInterface $event Event.
+     * @param \Cake\Datasource\EntityInterface $entity Entity being saved.
+     * @return void
+     */
+    public function beforeSave(EventInterface $event, $entity): void
+    {
+        // Defensive timestamp fallback in case behavior resolution is bypassed.
+        $now = FrozenTime::now();
+        if ($entity->isNew() && !$entity->get('created')) {
+            $entity->set('created', $now);
+        }
+        if (!$entity->get('modified')) {
+            $entity->set('modified', $now);
+        }
     }
 }

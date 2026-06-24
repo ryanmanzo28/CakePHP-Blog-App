@@ -44,28 +44,28 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
     <section class="dashboard__stats" aria-label="<?= __('Overview metrics') ?>">
         <article class="dashboard__card admin-dash__metric admin-dash__metric--articles">
             <span class="dashboard__card-icon" aria-hidden="true">📰</span>
-            <span class="dashboard__card-value"><?= $articleCount ?></span>
+            <span class="dashboard__card-value" id="admin-stat-articleCount"><?= $articleCount ?></span>
             <span class="dashboard__card-label"><?= __('Total Articles') ?></span>
             <?= $this->Html->link(__('View all'), ['controller' => 'Articles', 'action' => 'index'], ['class' => 'dashboard__card-link']) ?>
         </article>
 
         <article class="dashboard__card admin-dash__metric admin-dash__metric--users">
             <span class="dashboard__card-icon" aria-hidden="true">👥</span>
-            <span class="dashboard__card-value"><?= $userCount ?></span>
+            <span class="dashboard__card-value" id="admin-stat-userCount"><?= $userCount ?></span>
             <span class="dashboard__card-label"><?= __('Total Users') ?></span>
             <?= $this->Html->link(__('Manage users'), ['controller' => 'Users', 'action' => 'index'], ['class' => 'dashboard__card-link']) ?>
         </article>
 
         <article class="dashboard__card admin-dash__metric admin-dash__metric--published">
             <span class="dashboard__card-icon" aria-hidden="true">✅</span>
-            <span class="dashboard__card-value"><?= $publishedCount ?></span>
+            <span class="dashboard__card-value" id="admin-stat-publishedCount"><?= $publishedCount ?></span>
             <span class="dashboard__card-label"><?= __('Published Posts') ?></span>
             <?= $this->Html->link(__('Write new'), ['controller' => 'Articles', 'action' => 'add'], ['class' => 'dashboard__card-link']) ?>
         </article>
 
         <article class="dashboard__card admin-dash__metric admin-dash__metric--drafts">
             <span class="dashboard__card-icon" aria-hidden="true">📝</span>
-            <span class="dashboard__card-value"><?= $draftCount ?></span>
+            <span class="dashboard__card-value" id="admin-stat-draftCount"><?= $draftCount ?></span>
             <span class="dashboard__card-label"><?= __('Draft Posts') ?></span>
             <?= $this->Html->link(__('Review drafts'), ['controller' => 'Articles', 'action' => 'index'], ['class' => 'dashboard__card-link']) ?>
         </article>
@@ -75,8 +75,8 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
         <article class="admin-dash__insight-card">
             <h3><?= __('Last 7 Days') ?></h3>
             <div class="admin-dash__insight-grid">
-                <p><strong><?= $newArticlesLast7Days ?></strong> <?= __('new posts') ?></p>
-                <p><strong><?= $newUsersLast7Days ?></strong> <?= __('new users') ?></p>
+                <p><strong id="admin-stat-newArticlesLast7Days"><?= $newArticlesLast7Days ?></strong> <?= __('new posts') ?></p>
+                <p><strong id="admin-stat-newUsersLast7Days"><?= $newUsersLast7Days ?></strong> <?= __('new users') ?></p>
             </div>
         </article>
     </section>
@@ -240,3 +240,49 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
 
 </div>
 </div>
+
+<script>
+(function () {
+    var statMap = {
+        articleCount: document.getElementById('admin-stat-articleCount'),
+        userCount: document.getElementById('admin-stat-userCount'),
+        publishedCount: document.getElementById('admin-stat-publishedCount'),
+        draftCount: document.getElementById('admin-stat-draftCount'),
+        newArticlesLast7Days: document.getElementById('admin-stat-newArticlesLast7Days'),
+        newUsersLast7Days: document.getElementById('admin-stat-newUsersLast7Days')
+    };
+
+    function applyStats(data) {
+        Object.keys(statMap).forEach(function (key) {
+            var el = statMap[key];
+            if (!el || typeof data[key] === 'undefined' || data[key] === null) {
+                return;
+            }
+            el.textContent = String(data[key]);
+        });
+    }
+
+    function refreshStats() {
+        fetch('<?= $this->Url->build(['controller' => 'Dashboard', 'action' => 'adminStats']) ?>', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json'
+            },
+            cache: 'no-store'
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('stats request failed');
+                }
+                return response.json();
+            })
+            .then(applyStats)
+            .catch(function () {
+                // Keep current values when polling fails.
+            });
+    }
+
+    setInterval(refreshStats, 15000);
+})();
+</script>

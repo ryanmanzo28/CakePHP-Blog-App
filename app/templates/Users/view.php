@@ -19,6 +19,13 @@ use function Cake\I18n\__;
     </aside>
     <div class="column-responsive column-80">
         <div class="users view content">
+            <div class="user-profile-head">
+                <?php if (!empty($user->profile_image)) : ?>
+                    <?= $this->Html->image($user->profile_image, ['class' => 'user-avatar user-avatar--large', 'alt' => __('Avatar')]) ?>
+                <?php else : ?>
+                    <span class="user-avatar user-avatar--large user-avatar--placeholder"><?= strtoupper(substr((string)$user->email, 0, 1)) ?></span>
+                <?php endif; ?>
+            </div>
             <h3><?= h($user->email) ?></h3>
             <table>
                 <tr>
@@ -65,9 +72,9 @@ use function Cake\I18n\__;
                             <td><?= h($articles->created) ?></td>
                             <td><?= h($articles->modified) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'Articles', 'action' => 'view', $articles->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'Articles', 'action' => 'edit', $articles->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'Articles', 'action' => 'delete', $articles->id], ['confirm' => __('Are you sure you want to delete # {0}?', $articles->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['controller' => 'Articles', 'action' => 'view', $articles->slug]) ?>
+                                <?= $this->Html->link(__('Edit'), ['controller' => 'Articles', 'action' => 'edit', $articles->slug]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'Articles', 'action' => 'delete', $articles->slug], ['confirm' => __('Are you sure you want to delete # {0}?', $articles->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

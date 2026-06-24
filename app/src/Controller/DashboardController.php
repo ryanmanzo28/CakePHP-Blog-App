@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Model\Entity\User;
 use App\Service\ContentModerationService;
 use Cake\Http\Exception\ForbiddenException;
+use Cake\Http\Response;
 use Cake\Event\EventInterface;
 
 /**
@@ -57,7 +58,8 @@ class DashboardController extends AppController
             ->where(['Articles.published' => true])
             ->orderDesc('Articles.created')
             ->limit(40)
-            ->all();
+            ->all()
+            ->toArray();
 
         if ($Articles->getSchema()->hasColumn('silenced')) {
             $feedArticles = $Articles->find()
@@ -67,7 +69,8 @@ class DashboardController extends AppController
                 ])
                 ->orderDesc('Articles.created')
                 ->limit(40)
-                ->all();
+                ->all()
+                ->toArray();
         }
 
         $myRecentArticles = [];
@@ -76,7 +79,8 @@ class DashboardController extends AppController
                 ->where(['Articles.user_id' => $currentUserId])
                 ->orderDesc('Articles.created')
                 ->limit(6)
-                ->all();
+                ->all()
+                ->toArray();
         }
 
         $this->set(compact('feedArticles', 'myRecentArticles'));
@@ -107,35 +111,27 @@ class DashboardController extends AppController
         $Articles = $this->fetchTable('Articles');
         /** @var \App\Model\Table\UsersTable $Users */
         $Users = $this->fetchTable('Users');
-
-        $articleCount = $Articles->find()->count();
-        $userCount = $Users->find()->count();
-        $publishedCount = $Articles->find()->where(['published' => true])->count();
-        $draftCount = $Articles->find()->where(['published' => false])->count();
-
-        $sevenDaysAgo = new \DateTimeImmutable('-7 days');
-        $newUsersLast7Days = $Users->find()
-            ->where(['Users.created >=' => $sevenDaysAgo])
-            ->count();
-        $newArticlesLast7Days = $Articles->find()
-            ->where(['Articles.created >=' => $sevenDaysAgo])
-            ->count();
+        $stats = $this->buildAdminStats($Articles, $Users);
+        extract($stats);
 
         $recentArticles = $Articles->find()
             ->orderDesc('Articles.created')
             ->limit(5)
-            ->all();
+            ->all()
+            ->toArray();
 
         $recentDrafts = $Articles->find()
             ->where(['Articles.published' => false])
             ->orderDesc('Articles.modified')
             ->limit(5)
-            ->all();
+            ->all()
+            ->toArray();
 
         $recentUsers = $Users->find()
             ->orderDesc('Users.created')
             ->limit(5)
-            ->all();
+            ->all()
+            ->toArray();
 
         $moderationReasonByArticleId = [];
         foreach ($recentArticles as $article) {
@@ -155,7 +151,8 @@ class DashboardController extends AppController
         $ModerationFilters = $this->fetchTable('ModerationFilters');
         $moderationFilters = $ModerationFilters->find()
             ->orderDesc('ModerationFilters.modified')
-            ->all();
+            ->all()
+            ->toArray();
 
         $this->set(compact(
             'articleCount',
@@ -173,6 +170,62 @@ class DashboardController extends AppController
             'isAdmin',
             'currentUserId'
         ));
+    }
+
+    /**
+     * Admin: lightweight stats payload for live dashboard updates.
+     *
+     * @return \Cake\Http\Response
+     */
+    public function adminStats(): Response
+    {
+        $this->Authorization->skipAuthorization();
+        $this->request->allowMethod(['get']);
+        $this->requireAdmin();
+
+        /** @var \App\Model\Table\ArticlesTable $Articles */
+        $Articles = $this->fetchTable('Articles');
+        /** @var \App\Model\Table\UsersTable $Users */
+        $Users = $this->fetchTable('Users');
+
+        $payload = $this->buildAdminStats($Articles, $Users);
+
+        return $this->response
+            ->withType('application/json')
+            ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->withStringBody((string)json_encode($payload));
+    }
+
+    /**
+     * Build admin stats used by both HTML and JSON endpoints.
+     *
+     * @param \App\Model\Table\ArticlesTable $Articles Articles table.
+     * @param \App\Model\Table\UsersTable $Users Users table.
+     * @return array<string, int>
+     */
+    private function buildAdminStats($Articles, $Users): array
+    {
+        $articleCount = $Articles->find()->count();
+        $userCount = $Users->find()->count();
+        $publishedCount = $Articles->find()->where(['published' => true])->count();
+        $draftCount = $Articles->find()->where(['published' => false])->count();
+
+        $sevenDaysAgo = new \DateTimeImmutable('-7 days');
+        $newUsersLast7Days = $Users->find()
+            ->where(['Users.created >=' => $sevenDaysAgo])
+            ->count();
+        $newArticlesLast7Days = $Articles->find()
+            ->where(['Articles.created >=' => $sevenDaysAgo])
+            ->count();
+
+        return compact(
+            'articleCount',
+            'userCount',
+            'publishedCount',
+            'draftCount',
+            'newUsersLast7Days',
+            'newArticlesLast7Days'
+        );
     }
 
     /**
