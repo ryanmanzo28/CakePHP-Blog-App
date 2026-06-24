@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Entity\User;
 use Cake\Event\EventInterface;
 
 /**
@@ -34,22 +35,59 @@ class DashboardController extends AppController
     {
         $this->Authorization->skipAuthorization();
 
+        $identity = $this->Authentication->getIdentity();
+        $identityEntity = $identity ? $identity->getOriginalData() : null;
+        $isAdmin = $identityEntity instanceof User && $identityEntity->isAdmin();
+        $currentUserId = $identityEntity instanceof User ? (int)$identityEntity->id : null;
+
         /** @var \App\Model\Table\ArticlesTable $Articles */
         $Articles = $this->fetchTable('Articles');
-        /** @var \App\Model\Table\UsersTable $Users */
-        $Users = $this->fetchTable('Users');
 
-        $articleCount = $Articles->find()->count();
-        $userCount    = $Users->find()->count();
+        if ($isAdmin) {
+            /** @var \App\Model\Table\UsersTable $Users */
+            $Users = $this->fetchTable('Users');
 
-        // Five most-recently created articles for the activity feed.
-        $recentArticles = $Articles->find()
-            ->orderDesc('Articles.created')
-            ->limit(5)
-            ->all();
+            $articleCount = $Articles->find()->count();
+            $userCount    = $Users->find()->count();
+            $publishedCount = $Articles->find()->where(['published' => true])->count();
 
-        $identity = $this->Authentication->getIdentity();
+            // Five most-recently created articles for the activity feed.
+            $recentArticles = $Articles->find()
+                ->orderDesc('Articles.created')
+                ->limit(5)
+                ->all();
 
-        $this->set(compact('articleCount', 'userCount', 'recentArticles', 'identity'));
+            $recentUsers = $Users->find()
+                ->orderDesc('Users.created')
+                ->limit(5)
+                ->all();
+
+            $this->set(compact(
+                'articleCount',
+                'userCount',
+                'publishedCount',
+                'recentArticles',
+                'recentUsers'
+            ));
+        } else {
+            $feedArticles = $Articles->find()
+                ->where(['Articles.published' => true])
+                ->orderDesc('Articles.created')
+                ->limit(30)
+                ->all();
+
+            $myRecentArticles = [];
+            if ($currentUserId !== null) {
+                $myRecentArticles = $Articles->find()
+                    ->where(['Articles.user_id' => $currentUserId])
+                    ->orderDesc('Articles.created')
+                    ->limit(6)
+                    ->all();
+            }
+
+            $this->set(compact('feedArticles', 'myRecentArticles'));
+        }
+
+        $this->set(compact('identity', 'isAdmin', 'currentUserId'));
     }
 }

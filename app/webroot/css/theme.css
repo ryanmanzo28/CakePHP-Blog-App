@@ -4,8 +4,61 @@
 html,
 body,
 .main,
-.popout-menu__panel {
-    transition: background-color 0.2s ease, color 0.2s ease;
+.content,
+.container,
+.popout-menu__panel,
+input, textarea, select, fieldset,
+table td, table th {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Font families controlled by settings page */
+.font-raleway body,
+.font-raleway .top-nav-links,
+.font-raleway .side-nav,
+.font-raleway h1,
+.font-raleway h2,
+.font-raleway h3,
+.font-raleway h4,
+.font-raleway h5,
+.font-raleway h6 {
+    font-family: 'Raleway', sans-serif;
+}
+
+.font-merriweather body,
+.font-merriweather .top-nav-links,
+.font-merriweather .side-nav,
+.font-merriweather h1,
+.font-merriweather h2,
+.font-merriweather h3,
+.font-merriweather h4,
+.font-merriweather h5,
+.font-merriweather h6 {
+    font-family: 'Merriweather', serif;
+}
+
+.font-fira-sans body,
+.font-fira-sans .top-nav-links,
+.font-fira-sans .side-nav,
+.font-fira-sans h1,
+.font-fira-sans h2,
+.font-fira-sans h3,
+.font-fira-sans h4,
+.font-fira-sans h5,
+.font-fira-sans h6 {
+    font-family: 'Fira Sans', sans-serif;
+}
+
+.font-jetbrains-mono body,
+.font-jetbrains-mono .top-nav-links,
+.font-jetbrains-mono .side-nav,
+.font-jetbrains-mono h1,
+.font-jetbrains-mono h2,
+.font-jetbrains-mono h3,
+.font-jetbrains-mono h4,
+.font-jetbrains-mono h5,
+.font-jetbrains-mono h6 {
+    font-family: 'JetBrains Mono', monospace;
 }
 
 /* Dark theme overrides (class lives on <html>) */
@@ -19,10 +72,33 @@ body,
     color: #ff8a8f;
 }
 
+/* Nav bar */
 .dark-theme .top-nav {
     background: #111315;
 }
 
+.dark-theme .top-nav-title a {
+    color: #ff8a8f;
+}
+
+.dark-theme .top-nav-title span {
+    color: #ccc;
+}
+
+.dark-theme .top-nav-links a,
+.dark-theme .side-nav a,
+.dark-theme th a,
+.dark-theme .actions a {
+    color: #aaa;
+}
+
+.dark-theme .top-nav-links a:hover,
+.dark-theme .side-nav a:hover,
+.dark-theme .actions a:hover {
+    color: #ff8a8f;
+}
+
+/* Headings */
 .dark-theme h1,
 .dark-theme h2,
 .dark-theme h3,
@@ -30,6 +106,168 @@ body,
 .dark-theme h5,
 .dark-theme h6 {
     color: #f5f5f5;
+}
+
+/* Content cards (.content is used on every view/form page) */
+.dark-theme .content {
+    background: #23272a;
+    box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.4), 0 3px 6px 0 rgba(0, 0, 0, 0.3);
+    color: #e6e6e6;
+}
+
+/* Ensure auth pages (e.g. login/register) never stay white in dark mode */
+.dark-theme .main,
+.dark-theme .container,
+.dark-theme .users.form.content,
+.dark-theme .users.form,
+.dark-theme .form.content {
+    background: transparent;
+    color: #e6e6e6;
+}
+
+.dark-theme .users.form.content,
+.dark-theme .form.content {
+    background: #23272a;
+}
+
+.dark-theme .users.form.content fieldset,
+.dark-theme .form.content fieldset {
+    background: transparent;
+}
+
+.dark-theme .users.form.content legend,
+.dark-theme .form.content legend {
+    background: transparent;
+    color: #d2d5d9;
+}
+
+/* Generic containers that commonly appear white in default Cake templates */
+.dark-theme .table-responsive,
+.dark-theme .related,
+.dark-theme .paginator,
+.dark-theme .view.content,
+.dark-theme .add.content,
+.dark-theme .edit.content,
+.dark-theme .index.content {
+    background: transparent;
+    color: #e6e6e6;
+}
+
+.dark-theme hr {
+    border-top-color: #34393d;
+}
+
+/* Forms — milligram sets inputs to background:#fff */
+.dark-theme input[type='text'],
+.dark-theme input[type='email'],
+.dark-theme input[type='password'],
+.dark-theme input[type='number'],
+.dark-theme input[type='search'],
+.dark-theme input[type='tel'],
+.dark-theme input[type='url'],
+.dark-theme input[type='date'],
+.dark-theme textarea,
+.dark-theme select {
+    background-color: #2c3135;
+    border-color: #4a5058;
+    color: #e6e6e6;
+}
+
+.dark-theme input::placeholder,
+.dark-theme textarea::placeholder {
+    color: #888;
+}
+
+.dark-theme input:focus,
+.dark-theme textarea:focus,
+.dark-theme select:focus {
+    border-color: #ff8a8f;
+}
+
+/* Prevent browser autofill from forcing white input boxes in dark mode */
+.dark-theme input:-webkit-autofill,
+.dark-theme input:-webkit-autofill:hover,
+.dark-theme input:-webkit-autofill:focus,
+.dark-theme textarea:-webkit-autofill,
+.dark-theme select:-webkit-autofill {
+    -webkit-text-fill-color: #e6e6e6;
+    -webkit-box-shadow: 0 0 0px 1000px #2c3135 inset;
+    box-shadow: 0 0 0px 1000px #2c3135 inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.dark-theme label,
+.dark-theme legend {
+    color: #ccc;
+}
+
+.dark-theme fieldset {
+    border-color: #4a5058;
+}
+
+/* Tables — milligram uses #e1e1e1 borders */
+.dark-theme table td,
+.dark-theme table th {
+    border-bottom-color: #34393d;
+    color: #e6e6e6;
+}
+
+.dark-theme table th {
+    color: #aaa;
+}
+
+/* Flash messages */
+.dark-theme .message {
+    background: #1a2a3a;
+    color: #7ec8e3;
+    border-color: #2e5d7e;
+}
+
+.dark-theme .message.success {
+    background: #1a2e22;
+    color: #6fcf97;
+    border-color: #27ae60;
+}
+
+.dark-theme .message.warning {
+    background: #2e2a10;
+    color: #f2c94c;
+    border-color: #c8a200;
+}
+
+.dark-theme .message.error {
+    background: #2e1a1a;
+    color: #eb5757;
+    border-color: #c0392b;
+}
+
+/* Code and pre blocks */
+.dark-theme code,
+.dark-theme pre {
+    background-color: #2c3135;
+    color: #e6e6e6;
+    border-color: #4a5058;
+}
+
+/* Blockquote */
+.dark-theme blockquote {
+    border-left-color: #4a5058;
+    color: #bbb;
+}
+
+/* Pagination */
+.dark-theme .prev.disabled a,
+.dark-theme .next.disabled a {
+    color: #666;
+}
+
+.dark-theme .pagination a {
+    color: #bbb;
+}
+
+.dark-theme .pagination a:hover,
+.dark-theme .pagination a:focus {
+    color: #ff8a8f;
 }
 
 /* Popout menu in dark mode */
@@ -64,132 +302,429 @@ body,
     cursor: pointer;
 }
 
-/* ── Dashboard ──────────────────────────────────────────────────────── */
-
-.dashboard {
-    padding: 1rem 0 3rem;
+.settings-page__controls {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 28rem;
+    margin-bottom: 1.2rem;
 }
 
-.dashboard__header {
-    margin-bottom: 2rem;
-}
-
-.dashboard__welcome {
-    color: #666;
+.settings-page__label {
     margin: 0;
+    font-weight: 600;
 }
 
-/* Stat cards row */
-.dashboard__stats {
-    display: flex;
-    gap: 1.25rem;
-    flex-wrap: wrap;
-    margin-bottom: 2.5rem;
+.settings-page__select {
+    margin-bottom: 0.25rem;
 }
 
-.dashboard__card {
-    flex: 1 1 10rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    background: #f9f9f9;
-    border: 1px solid #e6e6e6;
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
+/* Some browsers (notably Safari) can render select text dark unless we
+   style the settings selector explicitly in dark mode. */
+.dark-theme .settings-page__select {
+    background-color: #2c3135;
+    border-color: #4a5058;
+    color: #e6e6e6 !important;
+    -webkit-text-fill-color: #e6e6e6;
 }
 
-.dashboard__card-value {
-    font-size: 2.2rem;
-    font-weight: 700;
+.dark-theme .settings-page__select option {
+    background-color: #23272a;
+    color: #e6e6e6;
+}
+
+/* ── Access Denied (403) ────────────────────────────────────────────── */
+
+.access-denied {
+    max-width: 44rem;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 3rem 2.5rem;
+}
+
+.access-denied__icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
     line-height: 1;
-    color: #d33c44;
 }
 
-.dashboard__card-label {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
-}
-
-.dashboard__card-link {
-    font-size: 0.82rem;
-    margin-top: 0.5rem;
-}
-
-/* Sections */
-.dashboard__section {
-    margin-bottom: 2.5rem;
-}
-
-.dashboard__section h3 {
+.access-denied h2 {
     margin-bottom: 0.75rem;
 }
 
-/* Table */
-.dashboard__table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
+.access-denied > p {
+    color: #666;
+    margin-bottom: 2rem;
 }
 
-.dashboard__table th,
-.dashboard__table td {
-    text-align: left;
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid #eee;
-}
-
-.dashboard__table th {
-    color: #888;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-/* Quick-action buttons */
-.dashboard__actions {
+.access-denied__actions {
     display: flex;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 1rem;
     flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.access-denied__debug {
+    text-align: left;
+    margin-top: 2rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+
+.access-denied__debug summary {
+    cursor: pointer;
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.access-denied__debug pre {
+    background: #f5f5f5;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 0.5rem;
+}
+
+/* Dark mode for access-denied */
+.dark-theme .access-denied > p {
+    color: #aaa;
+}
+
+.dark-theme .access-denied__debug {
+    border-top-color: #34393d;
+}
+
+.dark-theme .access-denied__debug pre {
+    background: #2c3135;
+    border-color: #4a5058;
+    color: #e6e6e6;
+}
+
+/* ── Dashboard ──────────────────────────────────────────────────────── */
+
+.dashboard-shell {
+    width: 100%;
+    min-height: calc(100vh - 7rem);
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.25rem 0 2rem;
+    box-sizing: border-box;
+}
+
+.dashboard {
+    width: min(1180px, 100%);
+    max-width: 1180px;
+    min-height: auto;
+    margin: 0 auto;
+    padding: 0.75rem 0.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.dashboard__hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.2rem;
+    margin-bottom: 1.4rem;
+}
+
+.dashboard__hero-copy h2 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.dashboard__hero-copy p {
+    margin: 0;
+    color: #5f6368;
+}
+
+.dashboard__badge {
+    border: 1px solid #e8eaed;
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.76rem;
+    color: #5f6368;
+    background: #fff;
+}
+
+.dashboard__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dashboard__card {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.25rem;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.15);
+}
+
+.dashboard__card-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f3f4;
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard__card-value {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #202124;
+}
+
+.dashboard__card-label {
+    font-size: 0.8rem;
+    color: #5f6368;
+}
+
+.dashboard__card-link {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.dashboard__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.dashboard__panel {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.15);
+}
+
+.dashboard__panel h3 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 600;
+}
+
+.dashboard__panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.dashboard__panel-head a {
+    color: #1a73e8;
+    text-decoration: none;
+    font-size: 0.82rem;
+}
+
+.dashboard__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard__list-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #f0f2f4;
+}
+
+.dashboard__list-item:last-child {
+    border-bottom: none;
+}
+
+.dashboard__list-main {
+    min-width: 0;
+}
+
+.dashboard__list-title {
+    display: block;
+    color: #202124;
+    font-weight: 600;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard__list-meta {
+    display: block;
+    color: #5f6368;
+    font-size: 0.8rem;
+}
+
+.dashboard__pill {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid #dadce0;
+    color: #5f6368;
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    white-space: nowrap;
+    background: #f8f9fa;
+}
+
+.dashboard__pill--role {
+    background: #eef3fd;
+    border-color: #d2e3fc;
+    color: #174ea6;
+}
+
+.dashboard__actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .dashboard__action-btn {
-    display: inline-block;
-    padding: 0.55rem 1.1rem;
-    border: 2px solid #d33c44;
-    border-radius: 6px;
-    color: #d33c44;
-    font-weight: 600;
-    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.58rem 0.9rem;
+    border: 1px solid #dadce0;
+    border-radius: 10px;
+    color: #1a73e8;
+    font-weight: 500;
+    font-size: 0.85rem;
+    background: #fff;
     text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .dashboard__action-btn:hover {
-    background: #d33c44;
-    color: #fff;
+    background: #f1f3f4;
+    border-color: #c7cacf;
+    color: #174ea6;
     text-decoration: none;
+}
+
+.dashboard__empty {
+    color: #5f6368;
+    margin: 0.45rem 0;
 }
 
 /* Dark-mode dashboard */
 .dark-theme .dashboard__card {
-    background: #23272a;
-    border-color: #34393d;
+    background: #202124;
+    border-color: #3c4043;
+    box-shadow: none;
 }
 
-.dark-theme .dashboard__welcome {
+.dark-theme .dashboard__card-icon {
+    background: #2b2c2f;
+}
+
+.dark-theme .dashboard__badge,
+.dark-theme .dashboard__list-meta,
+.dark-theme .dashboard__hero-copy p {
     color: #aaa;
 }
 
-.dark-theme .dashboard__table th,
-.dark-theme .dashboard__table td {
-    border-color: #34393d;
+.dark-theme .dashboard__badge {
+    background: #202124;
+    border-color: #3c4043;
 }
 
-.dark-theme .dashboard__table th {
-    color: #888;
+.dark-theme .dashboard__panel {
+    background: #202124;
+    border-color: #3c4043;
+    box-shadow: none;
+}
+
+.dark-theme .dashboard__panel-head a,
+.dark-theme .dashboard__card-link,
+.dark-theme .dashboard__action-btn {
+    color: #8ab4f8;
+}
+
+.dark-theme .dashboard__list-item {
+    border-color: #3c4043;
+}
+
+.dark-theme .dashboard__list-title {
+    color: #f1f1f1;
+}
+
+.dark-theme .dashboard__card-value {
+    color: #f1f1f1;
+}
+
+.dark-theme .dashboard__card-label,
+.dark-theme .dashboard__empty {
+    color: #9aa0a6;
+}
+
+.dark-theme .dashboard__pill {
+    border-color: #5f6368;
+    color: #bbb;
+    background: #2b2c2f;
+}
+
+.dark-theme .dashboard__pill--role {
+    background: #1f2f46;
+    border-color: #355f9b;
+    color: #9ec1ff;
+}
+
+.dark-theme .dashboard__action-btn {
+    background: #202124;
+    border-color: #5f6368;
+}
+
+.dark-theme .dashboard__action-btn:hover {
+    background: #2b2c2f;
+    border-color: #7a7f85;
+}
+
+@media (max-width: 720px) {
+    .dashboard-shell {
+        min-height: auto;
+        align-items: flex-start;
+        padding: 0.5rem 0 1rem;
+    }
+
+    .dashboard {
+        width: 100%;
+        min-height: auto;
+        padding: 0.5rem 0.4rem 1rem;
+    }
+
+    .dashboard__hero {
+        flex-direction: column;
+    }
+
+    .dashboard__stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard__actions {
+        grid-template-columns: 1fr;
+    }
 }
 

@@ -43,6 +43,7 @@ class AppController extends Controller
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
+        $this->loadComponent('Authorization.Authorization');
 
         /*
          * Enable the following component for recommended CakePHP form protection settings.
@@ -50,7 +51,6 @@ class AppController extends Controller
          */
         //$this->loadComponent('FormProtection');
         $this->loadComponent('Authentication.Authentication');
-        $this->loadComponent('Authorization.Authorization');
 
     }
 

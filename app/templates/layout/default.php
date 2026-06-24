@@ -17,9 +17,13 @@ use function Cake\I18n\__;
 
 $cakeDescription = 'CakePHP: the rapid development php framework';
 $themeClass = (isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark') ? 'dark-theme' : 'light-theme';
+$fontCookie = $_COOKIE['font'] ?? 'raleway';
+$fontWhitelist = ['raleway', 'merriweather', 'fira-sans', 'jetbrains-mono'];
+$fontClass = in_array($fontCookie, $fontWhitelist, true) ? 'font-' . $fontCookie : 'font-raleway';
+$cssVersion = (string)(@filemtime(WWW_ROOT . 'css/theme.css') ?: time());
 ?>
 <!DOCTYPE html>
-<html class="<?= h($themeClass) ?>">
+<html class="<?= h($themeClass . ' ' . $fontClass) ?>">
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,9 +33,15 @@ $themeClass = (isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark') ? 'dark
     </title>
     <?= $this->Html->meta('icon') ?>
 
-    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&family=Merriweather:wght@400;700&family=Fira+Sans:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-    <?= $this->Html->css(['normalize.min', 'milligram.min', 'cake', 'settings-menu', 'theme']) ?>
+    <?= $this->Html->css([
+        'normalize.min',
+        'milligram.min',
+        'cake.css?v=' . $cssVersion,
+        'settings-menu.css?v=' . $cssVersion,
+        'theme.css?v=' . $cssVersion,
+    ]) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>

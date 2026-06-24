@@ -6,6 +6,9 @@ namespace App\Controller;
 
 use Cake\Http\Response;
 
+/**
+ * @property \App\Model\Table\ArticlesTable $Articles
+ */
 class ArticlesController extends AppController
 {
     public function index(): void

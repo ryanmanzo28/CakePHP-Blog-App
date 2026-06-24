@@ -26,6 +26,8 @@ class ArticlePolicy
 
     protected function isAuthor(IdentityInterface $user, Article $article): bool
     {
-        return $article->user_id === $user->getIdentifier();
+        $entity = $user->getOriginalData();
+
+        return isset($entity->id) && $article->user_id === $entity->id;
     }
 }
