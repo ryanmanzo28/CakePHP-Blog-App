@@ -10,12 +10,18 @@ class ArticlesController extends AppController
 {
     public function index(): void
     {
+        // View, index and tags actions are public methods
+// and don't require authorization checks.
+        $this->Authorization->skipAuthorization();
         $articles = $this->paginate($this->Articles);
         $this->set(compact('articles'));
     }
 
     public function view($slug = null): void
     {
+        // View, index and tags actions are public methods
+// and don't require authorization checks.
+        $this->Authorization->skipAuthorization();
         // Update retrieving tags with contain()
         $article = $this->Articles
             ->findBySlug($slug)
@@ -24,66 +30,59 @@ class ArticlesController extends AppController
         $this->set(compact('article'));
     }
 
-    public function add(): ?Response
-    {
-        $article = $this->Articles->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $article = $this->Articles->patchEntity($article, $this->request->getData());
+    public function add()
+{
+    $article = $this->Articles->newEmptyEntity();
+    $this->Authorization->authorize($article);
 
-            // Hardcoding the user_id is temporary, and will be removed later
-            // when we build authentication out.
-            $article->user_id = 1;
+    if ($this->request->is('post')) {
+        $article = $this->Articles->patchEntity($article, $this->request->getData());
 
-            if ($this->Articles->save($article)) {
-                $this->Flash->success(__('Your article has been saved.'));
+        // Changed: Set the user_id from the current user.
+        $article->user_id = $this->request->getAttribute('identity')->getIdentifier();
 
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('Unable to add your article.'));
+        if ($this->Articles->save($article)) {
+            $this->Flash->success(__('Your article has been saved.'));
+
+            return $this->redirect(['action' => 'index']);
         }
-        // Get a list of tags.
-        $tags = $this->Articles->Tags->find('list')->all();
-
-        // Set tags to the view context
-        $this->set('tags', $tags);
-
-        $this->set('article', $article);
-
-        return null;
+        $this->Flash->error(__('Unable to add your article.'));
     }
+    $tags = $this->Articles->Tags->find('list')->all();
+    $this->set(compact('article', 'tags'));
+}
 
-    public function edit($slug): ?Response
-    {
-        $article = $this->Articles
-            ->findBySlug($slug)
-            ->contain('Tags') // load associated Tags
-            ->firstOrFail();
-        if ($this->request->is(['post', 'put'])) {
-            $this->Articles->patchEntity($article, $this->request->getData());
-            if ($this->Articles->save($article)) {
-                $this->Flash->success(__('Your article has been updated.'));
+    // in src/Controller/ArticlesController.php
 
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('Unable to update your article.'));
+public function edit($slug)
+{
+    $article = $this->Articles
+        ->findBySlug($slug)
+        ->contain('Tags') // load associated Tags
+        ->firstOrFail();
+    $this->Authorization->authorize($article);
+
+    if ($this->request->is(['post', 'put'])) {
+        $this->Articles->patchEntity($article, $this->request->getData(), [
+            // Added: Disable modification of user_id.
+            'accessibleFields' => ['user_id' => false],
+        ]);
+        if ($this->Articles->save($article)) {
+            $this->Flash->success(__('Your article has been updated.'));
+
+            return $this->redirect(['action' => 'index']);
         }
-
-        // Get a list of tags.
-        $tags = $this->Articles->Tags->find('list')->all();
-
-        // Set tags to the view context
-        $this->set('tags', $tags);
-
-        $this->set('article', $article);
-
-        return null;
+        $this->Flash->error(__('Unable to update your article.'));
     }
-
+    $tags = $this->Articles->Tags->find('list')->all();
+    $this->set(compact('article', 'tags'));
+}
     public function delete(?string $slug): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
 
         $article = $this->Articles->findBySlug($slug)->firstOrFail();
+        $this->Authorization->authorize($article);
         if ($this->Articles->delete($article)) {
             $this->Flash->success(__('The {0} article has been deleted.', $article->title));
 
@@ -95,6 +94,9 @@ class ArticlesController extends AppController
 
     public function tags(): void
     {
+        // View, index and tags actions are public methods
+// and don't require authorization checks.
+        $this->Authorization->skipAuthorization();
         // The 'pass' key is provided by CakePHP and contains all
         // the passed URL path segments in the request.
         $tags = $this->request->getParam('pass');

@@ -40,7 +40,7 @@ class UsersTable extends Table
         parent::initialize($config);
 
         $this->setTable('users');
-        $this->setDisplayField('id');
+        $this->setDisplayField('email');
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
@@ -48,5 +48,43 @@ class UsersTable extends Table
         $this->hasMany('Articles', [
             'foreignKey' => 'user_id',
         ]);
+    }
+
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator
+            ->email('email')
+            ->requirePresence('email', 'create')
+            ->notEmptyString('email', __('An email address is required.'));
+
+        $validator
+            ->scalar('password')
+            ->requirePresence('password', 'create')
+            ->notEmptyString('password', __('A password is required.'));
+
+        return $validator;
+    }
+
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->isUnique(['email']), [
+            'errorField' => 'email',
+            'message' => __('This email address is already in use.'),
+        ]);
+
+        return $rules;
     }
 }

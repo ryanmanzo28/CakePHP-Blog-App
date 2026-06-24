@@ -19,11 +19,23 @@ use function Cake\I18n\__;
     </aside>
     <div class="column-responsive column-80">
         <div class="users view content">
-            <h3><?= h($user->id) ?></h3>
+            <h3><?= h($user->email) ?></h3>
             <table>
                 <tr>
                     <th><?= __('Id') ?></th>
                     <td><?= $this->Number->format($user->id) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Email') ?></th>
+                    <td><?= h($user->email) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Created') ?></th>
+                    <td><?= h($user->created) ?></td>
+                </tr>
+                <tr>
+                    <th><?= __('Modified') ?></th>
+                    <td><?= h($user->modified) ?></td>
                 </tr>
             </table>
             <div class="related">
