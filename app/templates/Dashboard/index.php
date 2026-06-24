@@ -55,6 +55,7 @@ $followedUserIds = $followedUserIds ?? [];
                     if ($excerpt === '') {
                         $excerpt = mb_substr($body, 0, 260);
                     }
+                    $readMins = max(1, (int)ceil(str_word_count(strip_tags($body)) / 200));
                     ?>
                     <article class="dashboard-feed__card">
                         <header class="dashboard-feed__card-head">
@@ -63,7 +64,10 @@ $followedUserIds = $followedUserIds ?? [];
                                 ['controller' => 'Articles', 'action' => 'view', $article->slug],
                                 ['class' => 'dashboard-feed__title']
                             ) ?>
-                            <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
+                            <div class="dashboard-feed__head-meta">
+                                <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
+                                <span class="dashboard-feed__read-time"><?= __n('{0} min', '{0} min', $readMins, $readMins) ?></span>
+                            </div>
                         </header>
 
                         <?php

@@ -15,7 +15,7 @@ use function Cake\I18n\__;
  * @var \App\View\AppView $this
  */
 
-$cakeDescription = 'CakePHP: the rapid development php framework';
+$cakeDescription = 'Hydracor';
 $themeClass = (isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark') ? 'dark-theme' : 'light-theme';
 $fontCookie = $_COOKIE['font'] ?? 'raleway';
 $fontWhitelist = ['raleway', 'merriweather', 'fira-sans', 'jetbrains-mono'];
@@ -28,8 +28,7 @@ $cssVersion = (string)(@filemtime(WWW_ROOT . 'css/theme.css') ?: time());
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-        <?= $cakeDescription ?>:
-        <?= $this->fetch('title') ?>
+        <?= $this->fetch('title') ?> &mdash; <?= $cakeDescription ?>
     </title>
     <?= $this->Html->meta('icon') ?>
 
@@ -48,23 +47,59 @@ $cssVersion = (string)(@filemtime(WWW_ROOT . 'css/theme.css') ?: time());
     <?= $this->fetch('script') ?>
 </head>
 <body>
+<?php
+$navIdentity = $this->getRequest()->getAttribute('identity');
+$navIsLoggedIn = $navIdentity !== null;
+$navIdentityEntity = $navIsLoggedIn ? $navIdentity->getOriginalData() : null;
+$navIsAdmin = $navIdentityEntity && method_exists($navIdentityEntity, 'isAdmin') && $navIdentityEntity->isAdmin();
+?>
     <nav class="top-nav">
         <div class="top-nav-title">
-            <a href="<?= $this->Url->build('/') ?>"><span>Cake</span>PHP</a>
+            <a href="<?= $this->Url->build('/') ?>">Hydracor</a>
         </div>
         <div class="top-nav-links">
-            <a target="_blank" rel="noopener" href="https://book.cakephp.org/4/">Documentation</a>
-            <a target="_blank" rel="noopener" href="https://api.cakephp.org/">API</a>
+            <?php if ($navIsLoggedIn) : ?>
+                <?= $this->Html->link(__('Feed'), ['controller' => 'Dashboard', 'action' => 'index']) ?>
+                <?php if ($navIsAdmin) : ?>
+                    <?= $this->Html->link(__('Admin'), ['controller' => 'Dashboard', 'action' => 'admin']) ?>
+                <?php endif; ?>
+                <?= $this->Html->link(__('Write'), ['controller' => 'Articles', 'action' => 'add']) ?>
+                <?= $this->Html->link(__('Profile'), ['controller' => 'Users', 'action' => 'profile']) ?>
+                <?= $this->Html->link(__('Sign out'), ['controller' => 'Users', 'action' => 'logout']) ?>
+            <?php else : ?>
+                <?= $this->Html->link(__('Sign in'), ['controller' => 'Users', 'action' => 'login']) ?>
+                <?= $this->Html->link(__('Register'), ['controller' => 'Users', 'action' => 'add']) ?>
+            <?php endif; ?>
         </div>
     </nav>
     <main class="main">
         <div class="container">
+            <?php
+            $announcementFile = TMP . 'announcement.txt';
+            if (file_exists($announcementFile)) :
+                $announcementText = trim((string)file_get_contents($announcementFile));
+                if ($announcementText !== '') :
+            ?>
+                <div class="site-announcement" role="alert">
+                    <span class="site-announcement__icon">📢</span>
+                    <span class="site-announcement__text"><?= h($announcementText) ?></span>
+                </div>
+            <?php endif; endif; ?>
             <?= $this->Flash->render() ?>
             <?= $this->fetch('content') ?>
         </div>
     </main>
     <?= $this->element('settings_menu') ?>
-    <footer>
+    <footer class="site-footer">
+        <div class="site-footer__inner container">
+            <span class="site-footer__brand">Hydracor</span>
+            <span class="site-footer__copy">&copy; <?= date('Y') ?></span>
+            <nav class="site-footer__links">
+                <?= $this->Html->link(__('Feed'), ['controller' => 'Dashboard', 'action' => 'index']) ?>
+                <?= $this->Html->link(__('Articles'), ['controller' => 'Articles', 'action' => 'index']) ?>
+                <?= $this->Html->link(__('Settings'), ['controller' => 'Settings', 'action' => 'index']) ?>
+            </nav>
+        </div>
     </footer>
 </body>
 </html>

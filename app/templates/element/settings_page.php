@@ -17,8 +17,7 @@
 
     <div class="settings-page__hero">
         <h2><?= __('Settings') ?></h2>
-        <p><?= __('Personalize appearance and manage account access.') ?></p>
-        <p><b><?= __('Theme and font changes are saved automatically.') ?></b></p>
+        <p><?= __('Personalize your experience. Theme and font changes are saved automatically.') ?></p>
     </div>
 
     <div class="settings-page__grid">
@@ -57,6 +56,76 @@
             <?php endif; ?>
         </section>
     </div>
+
+    <?php if ($isAdmin) : ?>
+    <div class="settings-page__admin-section">
+        <div class="settings-page__admin-heading">
+            <span class="settings-page__admin-badge">⚙ Admin Controls</span>
+            <p class="settings-page__status"><?= __('Only visible to administrators.') ?></p>
+        </div>
+
+        <div class="settings-page__grid">
+
+            <section class="settings-page__panel">
+                <h3><?= __('Change User Role') ?></h3>
+                <p class="settings-page__status"><?= __('Promote, demote, or ban any account by email.') ?></p>
+                <?= $this->Form->create(null, ['url' => ['controller' => 'Settings', 'action' => 'changeUserRole']]) ?>
+                    <?= $this->Form->control('target_email', [
+                        'label' => __('User Email'),
+                        'type'  => 'email',
+                        'placeholder' => 'user@example.com',
+                        'required' => true,
+                    ]) ?>
+                    <?= $this->Form->control('target_role', [
+                        'label'   => __('New Role'),
+                        'type'    => 'select',
+                        'options' => ['user' => __('User'), 'admin' => __('Admin'), 'banned' => __('Banned')],
+                    ]) ?>
+                    <?= $this->Form->button(__('Apply Role'), ['class' => 'button']) ?>
+                <?= $this->Form->end() ?>
+            </section>
+
+            <section class="settings-page__panel">
+                <h3><?= __('Bulk Publish Drafts') ?></h3>
+                <p class="settings-page__status"><?= __('Publish every unpublished article in one action.') ?></p>
+                <?= $this->Form->postLink(
+                    __('Publish All Drafts'),
+                    ['controller' => 'Settings', 'action' => 'bulkPublish'],
+                    [
+                        'class'   => 'button',
+                        'confirm' => __('Publish all draft articles? This cannot be undone.'),
+                    ]
+                ) ?>
+            </section>
+
+            <section class="settings-page__panel settings-page__panel--full">
+                <h3><?= __('Site Announcement') ?></h3>
+                <p class="settings-page__status"><?= __('Show a banner to all visitors. Leave blank to remove it.') ?></p>
+                <?= $this->Form->create(null, ['url' => ['controller' => 'Settings', 'action' => 'setAnnouncement']]) ?>
+                    <?= $this->Form->control('announcement', [
+                        'label'       => false,
+                        'type'        => 'textarea',
+                        'value'       => h($currentAnnouncement ?? ''),
+                        'placeholder' => __('Enter an announcement message...'),
+                        'rows'        => 3,
+                    ]) ?>
+                    <div class="settings-page__row">
+                        <?= $this->Form->button(__('Save Announcement'), ['class' => 'button']) ?>
+                        <?php if (!empty($currentAnnouncement)) : ?>
+                            <?= $this->Form->postLink(
+                                __('Clear Announcement'),
+                                ['controller' => 'Settings', 'action' => 'setAnnouncement'],
+                                ['class' => 'button button-outline', 'data-value' => '']
+                            ) ?>
+                        <?php endif; ?>
+                    </div>
+                <?= $this->Form->end() ?>
+            </section>
+
+        </div>
+    </div>
+    <?php endif; ?>
+
 </div>
 
 <script>
