@@ -10,6 +10,7 @@
 ?>
 <div class="settings-page">
     <?php
+    // checks the users identity and allows them to the page, users with the idnitty of admin will be allowed to see admin settings and pages
     $identity = $this->getRequest()->getAttribute('identity');
     $identityEntity = $identity ? $identity->getOriginalData() : null;
     $isAdmin = $identityEntity && method_exists($identityEntity, 'isAdmin') && $identityEntity->isAdmin();
@@ -112,11 +113,11 @@
                     <div class="settings-page__row">
                         <?= $this->Form->button(__('Save Announcement'), ['class' => 'button']) ?>
                         <?php if (!empty($currentAnnouncement)) : ?>
-                            <?= $this->Form->postLink(
-                                __('Clear Announcement'),
-                                ['controller' => 'Settings', 'action' => 'setAnnouncement'],
-                                ['class' => 'button button-outline', 'data-value' => '']
-                            ) ?>
+                            <?= $this->Form->button(__('Clear Announcement'), [
+                                'class' => 'button button-outline',
+                                'name' => 'clear_announcement',
+                                'value' => '1',
+                            ]) ?>
                         <?php endif; ?>
                     </div>
                 <?= $this->Form->end() ?>

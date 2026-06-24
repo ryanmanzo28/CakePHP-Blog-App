@@ -155,7 +155,8 @@ class SettingsController extends AppController
         $this->request->allowMethod(['post']);
         $this->requireAdmin();
 
-        $message = trim((string)$this->request->getData('announcement'));
+        $clearRequested = (string)$this->request->getData('clear_announcement') === '1';
+        $message = $clearRequested ? '' : trim((string)$this->request->getData('announcement'));
         $announcementFile = TMP . 'announcement.txt';
 
         if ($message === '') {
