@@ -1,10 +1,10 @@
-# CakePHP Docker Starter Pack
+# Hydracor Blog App
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
 3. [How to use](#how-to-use)
 
 ## Overview
-This is a starter pack for CakePHP 4.x on Docker.
+This is a HydraCor company branded blog web app, built in cakephp and running containerized on a docker contained environment. it allows users to creat and publish articles, follow other users, and view a feed of articles from followed users. Admin users can manage users,set filters, and set announcements that are displayed on the dashboard. The app is designed to be simple and easy to use, with a clean and modern interface.
 
 ## Prerequisites
 - [Docker](https://www.docker.com/)
