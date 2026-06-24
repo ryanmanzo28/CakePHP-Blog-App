@@ -54,19 +54,50 @@ class DashboardController extends AppController
         /** @var \App\Model\Table\ArticlesTable $Articles */
         $Articles = $this->fetchTable('Articles');
 
-        $feedArticles = $Articles->find()
-            ->where(['Articles.published' => true])
-            ->orderDesc('Articles.created')
-            ->limit(40)
-            ->all()
-            ->toArray();
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
 
+        $followedUserIds = [];
+        if ($currentUserId !== null) {
+            $followRows = $Follows->find()
+                ->select(['following_id'])
+                ->where(['Follows.follower_id' => $currentUserId])
+                ->enableHydration(false)
+                ->toArray();
+
+            foreach ($followRows as $row) {
+                $followedUserIds[] = (int)$row['following_id'];
+            }
+        }
+
+        $baseFeedConditions = ['Articles.published' => true];
         if ($Articles->getSchema()->hasColumn('silenced')) {
+            $baseFeedConditions['Articles.silenced'] = false;
+        }
+
+        $feedArticles = [];
+        if (!empty($followedUserIds)) {
+            $followedPosts = $Articles->find()
+                ->where($baseFeedConditions + ['Articles.user_id IN' => $followedUserIds])
+                ->contain(['Users'])
+                ->orderDesc('Articles.created')
+                ->limit(25)
+                ->all()
+                ->toArray();
+
+            $otherPosts = $Articles->find()
+                ->where($baseFeedConditions + ['Articles.user_id NOT IN' => $followedUserIds])
+                ->contain(['Users'])
+                ->orderDesc('Articles.created')
+                ->limit(40)
+                ->all()
+                ->toArray();
+
+            $feedArticles = array_slice(array_merge($followedPosts, $otherPosts), 0, 40);
+        } else {
             $feedArticles = $Articles->find()
-                ->where([
-                    'Articles.published' => true,
-                    'Articles.silenced' => false,
-                ])
+                ->where($baseFeedConditions)
+                ->contain(['Users'])
                 ->orderDesc('Articles.created')
                 ->limit(40)
                 ->all()
@@ -83,7 +114,78 @@ class DashboardController extends AppController
                 ->toArray();
         }
 
-        $this->set(compact('feedArticles', 'myRecentArticles'));
+        $likeCountByArticleId = [];
+        $likedByCurrentUserByArticleId = [];
+        $notifications = [];
+        $unreadNotificationCount = 0;
+
+        $articleIds = array_map(static function ($article): int {
+            return (int)$article->id;
+        }, $feedArticles);
+
+        if (!empty($articleIds)) {
+            /** @var \Cake\ORM\Table $Likes */
+            $Likes = $this->fetchTable('Likes');
+
+            $likeRows = $Likes->find()
+                ->select([
+                    'article_id',
+                    'like_count' => $Likes->find()->func()->count('*'),
+                ])
+                ->where(['Likes.article_id IN' => $articleIds])
+                ->group(['Likes.article_id'])
+                ->enableHydration(false)
+                ->toArray();
+
+            foreach ($likeRows as $row) {
+                $likeCountByArticleId[(int)$row['article_id']] = (int)$row['like_count'];
+            }
+
+            if ($currentUserId !== null) {
+                $likedRows = $Likes->find()
+                    ->select(['article_id'])
+                    ->where([
+                        'Likes.article_id IN' => $articleIds,
+                        'Likes.user_id' => $currentUserId,
+                    ])
+                    ->enableHydration(false)
+                    ->toArray();
+
+                foreach ($likedRows as $row) {
+                    $likedByCurrentUserByArticleId[(int)$row['article_id']] = true;
+                }
+            }
+        }
+
+        if ($currentUserId !== null) {
+            /** @var \Cake\ORM\Table $Notifications */
+            $Notifications = $this->fetchTable('Notifications');
+
+            $notifications = $Notifications->find()
+                ->where(['Notifications.user_id' => $currentUserId])
+                ->contain(['Articles'])
+                ->orderDesc('Notifications.created')
+                ->limit(8)
+                ->all()
+                ->toArray();
+
+            $unreadNotificationCount = $Notifications->find()
+                ->where([
+                    'Notifications.user_id' => $currentUserId,
+                    'Notifications.is_read' => false,
+                ])
+                ->count();
+        }
+
+        $this->set(compact(
+            'feedArticles',
+            'myRecentArticles',
+            'likeCountByArticleId',
+            'likedByCurrentUserByArticleId',
+            'notifications',
+            'unreadNotificationCount',
+            'followedUserIds'
+        ));
 
         $this->set(compact('identity', 'isAdmin', 'currentUserId'));
     }
@@ -96,7 +198,6 @@ class DashboardController extends AppController
     public function admin(): void
     {
         $this->Authorization->skipAuthorization();
-        $this->render('admin');
 
         $identity = $this->Authentication->getIdentity();
         $identityEntity = $identity ? $identity->getOriginalData() : null;
@@ -120,8 +221,35 @@ class DashboardController extends AppController
             ->all()
             ->toArray();
 
+        // Fallback: if ORM returns empty but rows exist, hydrate recent records by IDs.
+        if (count($recentArticles) === 0) {
+            $recentArticleIds = $Articles->find()
+                ->select(['id'])
+                ->orderDesc('Articles.id')
+                ->limit(5)
+                ->enableHydration(false)
+                ->toArray();
+
+            if (!empty($recentArticleIds)) {
+                $ids = array_map(static function (array $row): int {
+                    return (int)$row['id'];
+                }, $recentArticleIds);
+
+                $recentArticles = $Articles->find()
+                    ->where(['Articles.id IN' => $ids])
+                    ->orderDesc('Articles.created')
+                    ->all()
+                    ->toArray();
+            }
+        }
+
         $recentDrafts = $Articles->find()
-            ->where(['Articles.published' => false])
+            ->where(function ($exp) {
+                return $exp->or_([
+                    'Articles.published' => false,
+                    'Articles.published IS' => null,
+                ]);
+            })
             ->orderDesc('Articles.modified')
             ->limit(5)
             ->all()
@@ -149,10 +277,29 @@ class DashboardController extends AppController
 
         /** @var \App\Model\Table\ModerationFiltersTable $ModerationFilters */
         $ModerationFilters = $this->fetchTable('ModerationFilters');
+        $moderationFilterCount = $ModerationFilters->find()->count();
         $moderationFilters = $ModerationFilters->find()
             ->orderDesc('ModerationFilters.modified')
             ->all()
             ->toArray();
+
+        if ($moderationFilterCount > 0 && count($moderationFilters) === 0) {
+            $moderationFilters = $ModerationFilters->find()
+                ->all()
+                ->toArray();
+        }
+
+        // Fallback: if count still appears empty, verify through ORM count path.
+        if ($moderationFilterCount === 0) {
+            $moderationFilterCount = $ModerationFilters->find()->count();
+            if ($moderationFilterCount > 0 && count($moderationFilters) === 0) {
+                $moderationFilters = $ModerationFilters->find()
+                    ->orderDesc('ModerationFilters.id')
+                    ->limit(50)
+                    ->all()
+                    ->toArray();
+            }
+        }
 
         $this->set(compact(
             'articleCount',
@@ -165,6 +312,7 @@ class DashboardController extends AppController
             'recentDrafts',
             'recentUsers',
             'moderationFilters',
+            'moderationFilterCount',
             'moderationReasonByArticleId',
             'identity',
             'isAdmin',
@@ -208,7 +356,14 @@ class DashboardController extends AppController
         $articleCount = $Articles->find()->count();
         $userCount = $Users->find()->count();
         $publishedCount = $Articles->find()->where(['published' => true])->count();
-        $draftCount = $Articles->find()->where(['published' => false])->count();
+        $draftCount = $Articles->find()
+            ->where(function ($exp) {
+                return $exp->or_([
+                    'Articles.published' => false,
+                    'Articles.published IS' => null,
+                ]);
+            })
+            ->count();
 
         $sevenDaysAgo = new \DateTimeImmutable('-7 days');
         $newUsersLast7Days = $Users->find()

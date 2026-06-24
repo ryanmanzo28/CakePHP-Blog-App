@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Entity\User;
 use Cake\Event\EventInterface;
 
 /**
@@ -35,6 +36,37 @@ class SettingsController extends AppController
         // user themselves), so there's nothing to authorize against.
         $this->Authorization->skipAuthorization();
 
-        $this->set('identity', $this->Authentication->getIdentity());
+        $identity = $this->Authentication->getIdentity();
+        $identityEntity = $identity ? $identity->getOriginalData() : null;
+
+        if ($this->request->is('post')) {
+            $submittedCode = trim((string)$this->request->getData('admin_upgrade_code'));
+            $expectedCode = (string)env('ADMIN_UPGRADE_CODE', 'password');
+
+            if (!$identityEntity instanceof User) {
+                $this->Flash->error(__('Unable to load your account.'));
+            } elseif ($identityEntity->isAdmin()) {
+                $this->Flash->success(__('Your account is already an admin account.'));
+            } elseif ($submittedCode === '') {
+                $this->Flash->error(__('Please enter the admin upgrade code.'));
+            } elseif (hash_equals($expectedCode, $submittedCode)) {
+                /** @var \App\Model\Table\UsersTable $Users */
+                $Users = $this->fetchTable('Users');
+                $user = $Users->get((int)$identityEntity->id);
+                $user->role = User::ROLE_ADMIN;
+
+                if ($Users->save($user)) {
+                    $this->Flash->success(__('Admin access granted. Please re-login to refresh permissions.'));
+
+                    return $this->redirect(['controller' => 'Users', 'action' => 'logout']);
+                }
+
+                $this->Flash->error(__('Could not upgrade account role. Please try again.'));
+            } else {
+                $this->Flash->error(__('Invalid admin upgrade code.'));
+            }
+        }
+
+        $this->set(compact('identity'));
     }
 }

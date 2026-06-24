@@ -16,6 +16,7 @@ $recentArticles = $recentArticles ?? [];
 $recentDrafts = $recentDrafts ?? [];
 $recentUsers = $recentUsers ?? [];
 $moderationFilters = $moderationFilters ?? [];
+$moderationFilterCount = $moderationFilterCount ?? count($moderationFilters);
 $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
 ?>
 <div class="dashboard-shell">
@@ -173,7 +174,7 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
 
         <section class="dashboard__panel admin-dash__moderation-panel">
             <div class="dashboard__panel-head">
-                <h3><?= __('Content Filters') ?></h3>
+                <h3><?= __('Content Filters ({0})', (int)$moderationFilterCount) ?></h3>
                 <?= $this->Form->postLink(
                     __('Reprocess Posts'),
                     ['controller' => 'Dashboard', 'action' => 'reprocessFilters'],
@@ -195,7 +196,7 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
                 <?= $this->Form->button(__('Add Filter'), ['class' => 'button']) ?>
             <?= $this->Form->end() ?>
 
-            <?php if (count($moderationFilters) === 0) : ?>
+            <?php if ((int)$moderationFilterCount === 0) : ?>
                 <p class="dashboard__empty"><?= __('No moderation filters configured yet.') ?></p>
             <?php else : ?>
                 <ul class="dashboard__list admin-dash__filters-list">
@@ -243,6 +244,7 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
 
 <script>
 (function () {
+    var statsUrl = '<?= $this->Url->build(['controller' => 'Dashboard', 'action' => 'adminStats']) ?>';
     var statMap = {
         articleCount: document.getElementById('admin-stat-articleCount'),
         userCount: document.getElementById('admin-stat-userCount'),
@@ -263,7 +265,10 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
     }
 
     function refreshStats() {
-        fetch('<?= $this->Url->build(['controller' => 'Dashboard', 'action' => 'adminStats']) ?>', {
+        var sep = statsUrl.indexOf('?') === -1 ? '?' : '&';
+        var requestUrl = statsUrl + sep + 't=' + Date.now();
+
+        fetch(requestUrl, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -283,6 +288,7 @@ $moderationReasonByArticleId = $moderationReasonByArticleId ?? [];
             });
     }
 
+    refreshStats();
     setInterval(refreshStats, 15000);
 })();
 </script>

@@ -9,22 +9,53 @@
  */
 ?>
 <div class="settings-page">
-    <h2><?= __('Settings') ?></h2>
-    <p><?= __('Edit Your Settings Here') ?></p>
-    <p><b><?= __('Your changes will be saved automatically.') ?></b></p>
+    <?php
+    $identity = $this->getRequest()->getAttribute('identity');
+    $identityEntity = $identity ? $identity->getOriginalData() : null;
+    $isAdmin = $identityEntity && method_exists($identityEntity, 'isAdmin') && $identityEntity->isAdmin();
+    ?>
 
-    <div class="settings-page__controls">
-        <button id="theme-toggle" type="button" class="settings-page__button">
-            <?= __('Switch Theme') ?>
-        </button>
+    <div class="settings-page__hero">
+        <h2><?= __('Settings') ?></h2>
+        <p><?= __('Personalize appearance and manage account access.') ?></p>
+        <p><b><?= __('Theme and font changes are saved automatically.') ?></b></p>
+    </div>
 
-        <label for="font-select" class="settings-page__label"><?= __('Font Family') ?></label>
-        <select id="font-select" class="settings-page__select">
-            <option value="raleway"><?= __('Raleway') ?></option>
-            <option value="merriweather"><?= __('Merriweather') ?></option>
-            <option value="fira-sans"><?= __('Fira Sans') ?></option>
-            <option value="jetbrains-mono"><?= __('JetBrains Mono') ?></option>
-        </select>
+    <div class="settings-page__grid">
+        <section class="settings-page__panel">
+            <h3><?= __('Appearance') ?></h3>
+            <div class="settings-page__controls">
+                <button id="theme-toggle" type="button" class="settings-page__button">
+                    <?= __('Switch Theme') ?>
+                </button>
+
+                <label for="font-select" class="settings-page__label"><?= __('Font Family') ?></label>
+                <select id="font-select" class="settings-page__select">
+                    <option value="raleway"><?= __('Raleway') ?></option>
+                    <option value="merriweather"><?= __('Merriweather') ?></option>
+                    <option value="fira-sans"><?= __('Fira Sans') ?></option>
+                    <option value="jetbrains-mono"><?= __('JetBrains Mono') ?></option>
+                </select>
+            </div>
+        </section>
+
+        <section class="settings-page__panel">
+            <h3><?= __('Account Access') ?></h3>
+            <?php if ($isAdmin) : ?>
+                <p class="settings-page__status settings-page__status--ok"><?= __('Your account currently has admin access.') ?></p>
+            <?php else : ?>
+                <p class="settings-page__status"><?= __('Enter the admin upgrade code to unlock admin dashboard access.') ?></p>
+                <?= $this->Form->create(null, ['url' => ['controller' => 'Settings', 'action' => 'index'], 'class' => 'settings-page__upgrade-form']) ?>
+                    <?= $this->Form->control('admin_upgrade_code', [
+                        'label' => __('Admin Upgrade Code'),
+                        'type' => 'password',
+                        'required' => true,
+                        'autocomplete' => 'off',
+                    ]) ?>
+                    <?= $this->Form->button(__('Upgrade to Admin'), ['class' => 'button']) ?>
+                <?= $this->Form->end() ?>
+            <?php endif; ?>
+        </section>
     </div>
 </div>
 

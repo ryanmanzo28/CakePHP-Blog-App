@@ -68,7 +68,7 @@ class User extends Entity
      */
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return strtolower((string)$this->role) === self::ROLE_ADMIN;
     }
 
     /**

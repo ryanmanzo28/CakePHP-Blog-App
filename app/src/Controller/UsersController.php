@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Model\Entity\User;
-use Cake\Http\Response;
 use Psr\Http\Message\UploadedFileInterface;
 
 /**
@@ -15,6 +14,8 @@ use Psr\Http\Message\UploadedFileInterface;
  */
 class UsersController extends AppController
 {
+    private const MAX_PROFILE_IMAGE_BYTES = 2_097_152; // 2 MB
+
     /**
      * Index method
      *
@@ -57,9 +58,9 @@ class UsersController extends AppController
         if ($this->request->is('post')) {
             $user = $this->Users->patchEntity($user, $this->request->getData());
             if ($this->Users->save($user)) {
-                $this->Flash->success(__('The user has been saved.'));
+                $this->Flash->success(__('Account created. Please sign in.'));
 
-                return $this->redirect(['action' => 'index']);
+                return $this->redirect(['action' => 'login']);
             }
             $this->Flash->error(__('The user could not be saved. Please, try again.'));
         }
@@ -191,7 +192,7 @@ class UsersController extends AppController
             if ($upload instanceof UploadedFileInterface && $upload->getError() === UPLOAD_ERR_OK) {
                 $savedPath = $this->saveProfileImage($upload, $user->id);
                 if ($savedPath === null) {
-                    $this->Flash->error(__('Invalid image file. Use jpg, png, gif, or webp.'));
+                    $this->Flash->error(__('Invalid image file. Use jpg, png, gif, or webp under 2 MB.'));
 
                     return;
                 }
@@ -214,7 +215,116 @@ class UsersController extends AppController
             ->all()
             ->toArray();
 
-        $this->set(compact('user', 'myArticles'));
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
+
+        $followers = $Follows->find()
+            ->where(['Follows.following_id' => $currentUserId])
+            ->contain(['FollowerUsers'])
+            ->orderDesc('Follows.created')
+            ->all()
+            ->toArray();
+
+        $following = $Follows->find()
+            ->where(['Follows.follower_id' => $currentUserId])
+            ->contain(['FollowingUsers'])
+            ->orderDesc('Follows.created')
+            ->all()
+            ->toArray();
+
+        $this->set(compact('user', 'myArticles', 'followers', 'following'));
+    }
+
+    /**
+     * Follow another user.
+     *
+     * @param string|null $id Target user id.
+     * @return \Cake\Http\Response|null
+     */
+    public function follow($id = null)
+    {
+        $this->Authorization->skipAuthorization();
+        $this->request->allowMethod(['post']);
+
+        $identity = $this->request->getAttribute('identity');
+        $currentUserId = (int)$identity->getIdentifier();
+        $targetUserId = (int)$id;
+
+        if ($targetUserId <= 0 || $targetUserId === $currentUserId) {
+            $this->Flash->error(__('Invalid follow request.'));
+
+            return $this->redirect($this->referer(['controller' => 'Dashboard', 'action' => 'index'], true));
+        }
+
+        // Ensure target user exists.
+        $this->Users->get($targetUserId);
+
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
+        $existing = $Follows->find()
+            ->where([
+                'Follows.follower_id' => $currentUserId,
+                'Follows.following_id' => $targetUserId,
+            ])
+            ->first();
+
+        if ($existing) {
+            $this->Flash->success(__('You already follow this user.'));
+
+            return $this->redirect($this->referer(['controller' => 'Dashboard', 'action' => 'index'], true));
+        }
+
+        $follow = $Follows->newEntity([
+            'follower_id' => $currentUserId,
+            'following_id' => $targetUserId,
+        ]);
+
+        if ($Follows->save($follow)) {
+            $this->Flash->success(__('You are now following this user.'));
+        } else {
+            $this->Flash->error(__('Could not follow this user.'));
+        }
+
+        return $this->redirect($this->referer(['controller' => 'Dashboard', 'action' => 'index'], true));
+    }
+
+    /**
+     * Unfollow a user.
+     *
+     * @param string|null $id Target user id.
+     * @return \Cake\Http\Response|null
+     */
+    public function unfollow($id = null)
+    {
+        $this->Authorization->skipAuthorization();
+        $this->request->allowMethod(['post']);
+
+        $identity = $this->request->getAttribute('identity');
+        $currentUserId = (int)$identity->getIdentifier();
+        $targetUserId = (int)$id;
+
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
+        $existing = $Follows->find()
+            ->where([
+                'Follows.follower_id' => $currentUserId,
+                'Follows.following_id' => $targetUserId,
+            ])
+            ->first();
+
+        if (!$existing) {
+            $this->Flash->success(__('You are not following this user.'));
+
+            return $this->redirect($this->referer(['controller' => 'Dashboard', 'action' => 'index'], true));
+        }
+
+        if ($Follows->delete($existing)) {
+            $this->Flash->success(__('Unfollowed.'));
+        } else {
+            $this->Flash->error(__('Could not unfollow this user.'));
+        }
+
+        return $this->redirect($this->referer(['controller' => 'Dashboard', 'action' => 'index'], true));
     }
 
     /**
@@ -226,6 +336,10 @@ class UsersController extends AppController
      */
     private function saveProfileImage(UploadedFileInterface $upload, int $userId): ?string
     {
+        if ($upload->getSize() === null || $upload->getSize() > self::MAX_PROFILE_IMAGE_BYTES) {
+            return null;
+        }
+
         $clientName = (string)$upload->getClientFilename();
         $ext = strtolower(pathinfo($clientName, PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\Entity\User;
 use App\Service\ContentModerationService;
 use Cake\Http\Response;
 
@@ -39,25 +40,105 @@ class ArticlesController extends AppController
             ->findBySlug($slug)
             ->contain('Tags')
             ->firstOrFail();
-        $this->set(compact('article'));
+
+        $identity = $this->Authentication->getIdentity();
+        $identityEntity = $identity ? $identity->getOriginalData() : null;
+        $currentUserId = $identityEntity instanceof User ? (int)$identityEntity->id : null;
+
+        /** @var \Cake\ORM\Table $Likes */
+        $Likes = $this->fetchTable('Likes');
+        $likeCount = $Likes->find()
+            ->where(['Likes.article_id' => (int)$article->id])
+            ->count();
+
+        $likedByCurrentUser = false;
+        if ($currentUserId !== null) {
+            $likedByCurrentUser = $Likes->find()
+                ->where([
+                    'Likes.article_id' => (int)$article->id,
+                    'Likes.user_id' => $currentUserId,
+                ])
+                ->count() > 0;
+        }
+
+        $this->set(compact('article', 'likeCount', 'likedByCurrentUser', 'currentUserId'));
+    }
+
+    public function toggleLike($id = null)
+    {
+        $this->Authorization->skipAuthorization();
+        $this->request->allowMethod(['post']);
+
+        $identity = $this->Authentication->getIdentity();
+        $identityEntity = $identity ? $identity->getOriginalData() : null;
+        if (!$identityEntity instanceof User) {
+            $this->Flash->error(__('Please sign in to like posts.'));
+
+            return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+        }
+
+        $article = $this->Articles->get((int)$id);
+
+        /** @var \Cake\ORM\Table $Likes */
+        $Likes = $this->fetchTable('Likes');
+        /** @var \Cake\ORM\Table $Notifications */
+        $Notifications = $this->fetchTable('Notifications');
+
+        $existingLike = $Likes->find()
+            ->where([
+                'Likes.article_id' => (int)$article->id,
+                'Likes.user_id' => (int)$identityEntity->id,
+            ])
+            ->first();
+
+        if ($existingLike) {
+            $Likes->delete($existingLike);
+            $this->Flash->success(__('Like removed.'));
+
+            return $this->redirect($this->referer(['action' => 'view', $article->slug], true));
+        }
+
+        $like = $Likes->newEntity([
+            'article_id' => (int)$article->id,
+            'user_id' => (int)$identityEntity->id,
+        ]);
+
+        if ($Likes->save($like)) {
+            if ((int)$article->user_id !== (int)$identityEntity->id) {
+                $notification = $Notifications->newEntity([
+                    'user_id' => (int)$article->user_id,
+                    'actor_user_id' => (int)$identityEntity->id,
+                    'article_id' => (int)$article->id,
+                    'type' => 'like',
+                    'message' => __('{0} liked your post "{1}".', $identityEntity->email, $article->title),
+                    'is_read' => false,
+                ]);
+                $Notifications->save($notification);
+            }
+
+            $this->Flash->success(__('Post liked.'));
+        } else {
+            $this->Flash->error(__('Could not like this post.'));
+        }
+
+        return $this->redirect($this->referer(['action' => 'view', $article->slug], true));
     }
 
     public function add()
-{
-    $article = $this->Articles->newEmptyEntity();
-    $this->Authorization->authorize($article);
+    {
+        $article = $this->Articles->newEmptyEntity();
+        $this->Authorization->authorize($article);
 
-    if ($this->request->is('post')) {
-        $article = $this->Articles->patchEntity($article, $this->request->getData());
+        if ($this->request->is('post')) {
+            $article = $this->Articles->patchEntity($article, $this->request->getData());
 
-        if ($article->published === null) {
-            $article->published = false;
-        }
+            if ($article->published === null) {
+                $article->published = false;
+            }
 
-        // Changed: Set the user_id from the current user.
-        $article->user_id = $this->request->getAttribute('identity')->getIdentifier();
+            $article->user_id = $this->request->getAttribute('identity')->getIdentifier();
 
-        if ($this->Articles->save($article)) {
+            if ($this->Articles->save($article)) {
                 $result = $this->moderationService->moderateArticle($article);
 
                 if (!empty($result['deleted'])) {
@@ -66,7 +147,11 @@ class ArticlesController extends AppController
                     return $this->redirect(['action' => 'index']);
                 }
 
-            $this->Flash->success(__('Your article has been saved.'));
+                if ((bool)$article->published && (bool)!$article->silenced) {
+                    $this->notifyFollowersOfNewPost($article);
+                }
+
+                $this->Flash->success(__('Your article has been saved.'));
 
                 if (!empty($result['silenced'])) {
                     $this->Flash->warning(__('Your article is hidden from the main feed due to moderation filters.'));
@@ -75,13 +160,13 @@ class ArticlesController extends AppController
                     $this->Flash->error(__('Your account has been restricted by moderation policy.'));
                 }
 
-            return $this->redirect(['action' => 'index']);
+                return $this->redirect(['action' => 'index']);
+            }
+            $this->Flash->error(__('Unable to add your article.'));
         }
-        $this->Flash->error(__('Unable to add your article.'));
+        $tags = $this->Articles->Tags->find('list')->all();
+        $this->set(compact('article', 'tags'));
     }
-    $tags = $this->Articles->Tags->find('list')->all();
-    $this->set(compact('article', 'tags'));
-}
 
     // in src/Controller/ArticlesController.php
 
@@ -161,5 +246,46 @@ public function edit($slug)
             'articles' => $articles,
             'tags' => $tags,
         ]);
+    }
+
+    /**
+     * Notify followers when an author publishes a new post.
+     *
+     * @param \App\Model\Entity\Article $article Saved article.
+     * @return void
+     */
+    private function notifyFollowersOfNewPost($article): void
+    {
+        /** @var \Cake\ORM\Table $Follows */
+        $Follows = $this->fetchTable('Follows');
+        /** @var \Cake\ORM\Table $Notifications */
+        $Notifications = $this->fetchTable('Notifications');
+        /** @var \App\Model\Table\UsersTable $Users */
+        $Users = $this->fetchTable('Users');
+
+        $author = $Users->get((int)$article->user_id);
+
+        $followerRows = $Follows->find()
+            ->select(['follower_id'])
+            ->where(['Follows.following_id' => (int)$article->user_id])
+            ->enableHydration(false)
+            ->toArray();
+
+        foreach ($followerRows as $row) {
+            $followerId = (int)$row['follower_id'];
+            if ($followerId === (int)$article->user_id) {
+                continue;
+            }
+
+            $notification = $Notifications->newEntity([
+                'user_id' => $followerId,
+                'actor_user_id' => (int)$article->user_id,
+                'article_id' => (int)$article->id,
+                'type' => 'new_post',
+                'message' => __('{0} posted a new article: "{1}".', $author->email, $article->title),
+                'is_read' => false,
+            ]);
+            $Notifications->save($notification);
+        }
     }
 }

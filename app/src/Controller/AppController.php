@@ -62,6 +62,12 @@ public function beforeFilter(\Cake\Event\EventInterface $event): void
 
     $identity = $this->request->getAttribute('identity');
     $identityEntity = $identity ? $identity->getOriginalData() : null;
+
+    // Admins should not be blocked by policy checks.
+    if ($identityEntity instanceof User && $identityEntity->isAdmin()) {
+        $this->Authorization->skipAuthorization();
+    }
+
     if ($identityEntity instanceof User && $identityEntity->isBanned()) {
         $this->Authentication->logout();
         $this->Flash->error(__('Your account has been banned. Contact an administrator.'));

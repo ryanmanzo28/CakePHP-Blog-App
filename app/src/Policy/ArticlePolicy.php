@@ -2,6 +2,7 @@
 namespace App\Policy;
 
 use App\Model\Entity\Article;
+use App\Model\Entity\User;
 use Authorization\IdentityInterface;
 
 class ArticlePolicy
@@ -14,14 +15,21 @@ class ArticlePolicy
 
     public function canEdit(IdentityInterface $user, Article $article): bool
     {
-        // logged in users can edit their own articles.
-        return $this->isAuthor($user, $article);
+        // Admins can edit any article; users can edit their own.
+        return $this->isAdmin($user) || $this->isAuthor($user, $article);
     }
 
     public function canDelete(IdentityInterface $user, Article $article): bool
     {
-        // logged in users can delete their own articles.
-        return $this->isAuthor($user, $article);
+        // Admins can delete any article; users can delete their own.
+        return $this->isAdmin($user) || $this->isAuthor($user, $article);
+    }
+
+    protected function isAdmin(IdentityInterface $user): bool
+    {
+        $entity = $user->getOriginalData();
+
+        return $entity instanceof User && $entity->isAdmin();
     }
 
     protected function isAuthor(IdentityInterface $user, Article $article): bool

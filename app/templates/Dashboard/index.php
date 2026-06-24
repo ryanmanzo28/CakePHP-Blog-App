@@ -15,6 +15,11 @@ $identity = $identity ?? null;
 $currentUserId = $currentUserId ?? null;
 $feedArticles = $feedArticles ?? [];
 $myRecentArticles = $myRecentArticles ?? [];
+$likeCountByArticleId = $likeCountByArticleId ?? [];
+$likedByCurrentUserByArticleId = $likedByCurrentUserByArticleId ?? [];
+$notifications = $notifications ?? [];
+$unreadNotificationCount = $unreadNotificationCount ?? 0;
+$followedUserIds = $followedUserIds ?? [];
 ?>
 <div class="dashboard-shell">
 <div class="dashboard">
@@ -61,6 +66,33 @@ $myRecentArticles = $myRecentArticles ?? [];
                             <span class="dashboard__list-meta"><?= h($article->created->i18nFormat('MMM d, yyyy')) ?></span>
                         </header>
 
+                        <?php
+                        $author = $article->user ?? null;
+                        $authorId = $author ? (int)$author->id : (int)$article->user_id;
+                        $authorEmail = $author ? (string)$author->email : __('Unknown author');
+                        $isFollowingAuthor = in_array($authorId, $followedUserIds, true);
+                        ?>
+                        <div class="dashboard-feed__meta-row">
+                            <span class="dashboard-feed__author"><?= __('by {0}', h($authorEmail)) ?></span>
+                            <?php if (!empty($currentUserId) && $authorId !== (int)$currentUserId) : ?>
+                                <?php if ($isFollowingAuthor) : ?>
+                                    <?= $this->Form->postLink(
+                                        __('Following'),
+                                        ['controller' => 'Users', 'action' => 'unfollow', $authorId],
+                                        ['class' => 'dashboard-feed__follow-btn is-following']
+                                    ) ?>
+                                <?php else : ?>
+                                    <?= $this->Form->postLink(
+                                        __('Follow'),
+                                        ['controller' => 'Users', 'action' => 'follow', $authorId],
+                                        ['class' => 'dashboard-feed__follow-btn']
+                                    ) ?>
+                                <?php endif; ?>
+                            <?php elseif ($isFollowingAuthor) : ?>
+                                <span class="dashboard-feed__priority-pill"><?= __('Followed') ?></span>
+                            <?php endif; ?>
+                        </div>
+
                         <p class="dashboard-feed__excerpt">
                             <?= h($excerpt) ?>
                             <?php if (mb_strlen($body) > mb_strlen($excerpt)) : ?>
@@ -69,6 +101,21 @@ $myRecentArticles = $myRecentArticles ?? [];
                         </p>
 
                         <div class="dashboard-feed__actions">
+                            <?php
+                            $articleId = (int)$article->id;
+                            $likeCount = (int)($likeCountByArticleId[$articleId] ?? 0);
+                            $isLiked = !empty($likedByCurrentUserByArticleId[$articleId]);
+                            ?>
+                            <span class="dashboard-feed__likes-count"><?= __n('{0} like', '{0} likes', $likeCount, $likeCount) ?></span>
+                            <?php if (!empty($currentUserId)) : ?>
+                                <?= $this->Form->postLink(
+                                    $isLiked ? __('Unlike') : __('Like'),
+                                    ['controller' => 'Articles', 'action' => 'toggleLike', $articleId],
+                                    ['class' => 'dashboard-feed__like-btn' . ($isLiked ? ' is-liked' : '')]
+                                ) ?>
+                            <?php else : ?>
+                                <?= $this->Html->link(__('Sign in to like'), ['controller' => 'Users', 'action' => 'login'], ['class' => 'dashboard__card-link']) ?>
+                            <?php endif; ?>
                             <?= $this->Html->link(__('Read more'), ['controller' => 'Articles', 'action' => 'view', $article->slug], ['class' => 'dashboard__card-link']) ?>
                             <?php if (!empty($currentUserId) && (int)$article->user_id === (int)$currentUserId) : ?>
                                 <?= $this->Html->link(__('Edit my post'), ['controller' => 'Articles', 'action' => 'edit', $article->slug], ['class' => 'dashboard__card-link']) ?>
@@ -80,6 +127,38 @@ $myRecentArticles = $myRecentArticles ?? [];
         </section>
 
         <aside class="dashboard-feed__side" aria-label="<?= __('Your recent posts') ?>">
+            <section class="dashboard__panel">
+                <div class="dashboard__panel-head">
+                    <h3><?= __('Notifications') ?></h3>
+                    <?php if (!empty($unreadNotificationCount)) : ?>
+                        <span class="dashboard__pill dashboard__pill--role"><?= __n('{0} unread', '{0} unread', $unreadNotificationCount, $unreadNotificationCount) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (empty($notifications) || count($notifications) === 0) : ?>
+                    <p class="dashboard__empty"><?= __('No notifications yet.') ?></p>
+                <?php else : ?>
+                    <ul class="dashboard__list">
+                        <?php foreach ($notifications as $notification) : ?>
+                            <li class="dashboard__list-item">
+                                <div class="dashboard__list-main">
+                                    <?php if (!empty($notification->article_id) && !empty($notification->article->slug)) : ?>
+                                        <?= $this->Html->link(
+                                            h($notification->message),
+                                            ['controller' => 'Articles', 'action' => 'view', $notification->article->slug],
+                                            ['class' => 'dashboard__list-title']
+                                        ) ?>
+                                    <?php else : ?>
+                                        <span class="dashboard__list-title"><?= h($notification->message) ?></span>
+                                    <?php endif; ?>
+                                    <span class="dashboard__list-meta"><?= h($notification->created->i18nFormat('MMM d, yyyy h:mm a')) ?></span>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </section>
+
             <section class="dashboard__panel">
                 <div class="dashboard__panel-head">
                     <h3><?= __('Your Recent Posts') ?></h3>

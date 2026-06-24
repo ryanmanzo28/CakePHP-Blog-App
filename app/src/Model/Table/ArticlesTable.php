@@ -14,11 +14,32 @@ class ArticlesTable extends Table
 {
     public function initialize(array $config): void
     {
+        parent::initialize($config);
+
+        $this->setTable('articles');
+        $this->setDisplayField('title');
+        $this->setPrimaryKey('id');
+
         $this->addBehavior('Timestamp');
-        // Change this line
+
+        $this->belongsTo('Users', [
+            'foreignKey' => 'user_id',
+            'joinType' => 'INNER',
+        ]);
+
         $this->belongsToMany('Tags', [
             'joinTable' => 'articles_tags',
             'dependent' => true,
+        ]);
+
+        $this->hasMany('Likes', [
+            'foreignKey' => 'article_id',
+            'dependent' => true,
+        ]);
+
+        $this->hasMany('Notifications', [
+            'foreignKey' => 'article_id',
+            'dependent' => false,
         ]);
     }
 
