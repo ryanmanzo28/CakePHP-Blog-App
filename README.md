@@ -14,7 +14,7 @@ This is a HydraCor company branded blog web app, built in cakephp and running co
 ### Installation
 1. Clone this repository.
 ```
-$ git clone https://github.com/jaydenireland/cakephp-docker-starter
+$ git clone https://github.com/ryanmanzo28/CakePHP-Blog-App.git
 ```
 2. `cp .env.example .env` and replace values with your own
 3. `docker-compose up -d`
