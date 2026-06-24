@@ -5,7 +5,7 @@ use Cake\Routing\RouteBuilder;
 $routes->setRouteClass(DashedRoute::class);
 
 $routes->scope('/', function (RouteBuilder $builder) {
-    $builder->connect('/', ['controller' => 'Pages', 'action' => 'display', 'home']);
+    $builder->connect('/', ['controller' => 'Pages', 'action' => 'home']);
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
     // Add this

@@ -16,9 +16,10 @@ use function Cake\I18n\__;
  */
 
 $cakeDescription = 'CakePHP: the rapid development php framework';
+$themeClass = (isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark') ? 'dark-theme' : 'light-theme';
 ?>
 <!DOCTYPE html>
-<html>
+<html class="<?= h($themeClass) ?>">
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,7 +31,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
 
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
 
-    <?= $this->Html->css(['normalize.min', 'milligram.min', 'cake']) ?>
+    <?= $this->Html->css(['normalize.min', 'milligram.min', 'cake', 'settings-menu', 'theme']) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
@@ -52,6 +53,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
             <?= $this->fetch('content') ?>
         </div>
     </main>
+    <?= $this->element('settings_menu') ?>
     <footer>
     </footer>
 </body>

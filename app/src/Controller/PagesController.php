@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\Core\Configure;
+use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
@@ -31,6 +32,37 @@ use Cake\View\Exception\MissingTemplateException;
  */
 class PagesController extends AppController
 {
+    /**
+     * Allow unauthenticated access to home and display (static pages).
+     *
+     * @param \Cake\Event\EventInterface $event
+     * @return void
+     */
+    public function beforeFilter(EventInterface $event): void
+    {
+        parent::beforeFilter($event);
+        $this->Authentication->allowUnauthenticated(['home', 'display']);
+    }
+
+    /**
+     * Home — the application root (/). Logged-in users go to the dashboard;
+     * everyone else goes to the login page.
+     *
+     * @return \Cake\Http\Response
+     */
+    public function home(): Response
+    {
+        $this->Authorization->skipAuthorization();
+
+        $identity = $this->request->getAttribute('identity');
+
+        if ($identity) {
+            return $this->redirect(['controller' => 'Dashboard', 'action' => 'index']);
+        }
+
+        return $this->redirect(['controller' => 'Users', 'action' => 'login']);
+    }
+
     /**
      * Displays a view
      *

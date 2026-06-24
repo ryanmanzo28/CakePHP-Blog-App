@@ -68,6 +68,11 @@ class UsersTable extends Table
             ->requirePresence('password', 'create')
             ->notEmptyString('password', __('A password is required.'));
 
+        $validator
+            ->scalar('role')
+            ->inList('role', ['admin', 'user'], __('Role must be either admin or user.'))
+            ->notEmptyString('role');
+
         return $validator;
     }
 
@@ -80,9 +85,13 @@ class UsersTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
+        /*
+        builds rules to ensure that the email and username fields are unique. If a user tries to save a new user with an email or username that already exists in the database, the save operation will fail, and an error message will be associated with the respective field. This helps maintain data integrity by preventing duplicate entries for these fields.
+        */
         $rules->add($rules->isUnique(['email']), [
             'errorField' => 'email',
             'message' => __('This email address is already in use.'),
+
         ]);
 
         return $rules;
