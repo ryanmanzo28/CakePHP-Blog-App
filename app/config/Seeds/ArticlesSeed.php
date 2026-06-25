@@ -2,12 +2,17 @@
 declare(strict_types=1);
 
 // config/Seeds/ArticlesSeed.php
-use Migrations\BaseSeed;
+use Migrations\AbstractSeed;
 
-class ArticlesSeed extends BaseSeed
+class ArticlesSeed extends AbstractSeed
 {
     public function run(): void
     {
+        $existing = $this->fetchRow("SELECT id FROM articles WHERE slug = 'first-post' LIMIT 1");
+        if (!empty($existing)) {
+            return;
+        }
+
         $data = [
             [
                 'user_id' => 1,

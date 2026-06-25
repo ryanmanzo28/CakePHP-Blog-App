@@ -77,8 +77,8 @@ public function beforeFilter(\Cake\Event\EventInterface $event): void
         return;
     }
 
-    // for all controllers in our application, make index and view
+    // for all controllers in our application, make index, view, and posts
     // actions public, skipping the authentication check
-    $this->Authentication->allowUnauthenticated(['index', 'view']);
+    $this->Authentication->allowUnauthenticated(['index', 'view', 'posts']);
 }
 }

@@ -8,6 +8,7 @@ $routes->setRouteClass(DashedRoute::class);
 $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/', ['controller' => 'Pages', 'action' => 'home']);
     $builder->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
+    $builder->connect('/posts', ['controller' => 'Articles', 'action' => 'posts']);
     $builder->connect('/u/:id', ['controller' => 'Users', 'action' => 'publicProfile'])
         ->setPass(['id'])
         ->setPatterns(['id' => '\\d+']);

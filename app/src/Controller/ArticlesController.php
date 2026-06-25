@@ -30,6 +30,20 @@ class ArticlesController extends AppController
         $this->set(compact('articles'));
     }
 
+    public function posts(): void
+    {
+        $this->request->allowMethod(['get']);
+        $this->Authorization->skipAuthorization();
+        $this->viewBuilder()->setClassName('Json');
+
+        $posts = $this->Articles->find()
+            ->orderDesc('Articles.created')
+            ->all();
+
+        $this->set(compact('posts'));
+        $this->viewBuilder()->setOption('serialize', ['posts']);
+    }
+
     public function view($slug = null): void
     {
         // View, index and tags actions are public methods

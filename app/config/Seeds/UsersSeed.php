@@ -2,12 +2,17 @@
 declare(strict_types=1);
 
 // config/Seeds/UsersSeed.php
-use Migrations\BaseSeed;
+use Migrations\AbstractSeed;
 
-class UsersSeed extends BaseSeed
+class UsersSeed extends AbstractSeed
 {
     public function run(): void
     {
+        $existing = $this->fetchRow("SELECT id FROM users WHERE email = 'cakephp@example.com' LIMIT 1");
+        if (!empty($existing)) {
+            return;
+        }
+
         $data = [
             [
                 'email' => 'cakephp@example.com',
